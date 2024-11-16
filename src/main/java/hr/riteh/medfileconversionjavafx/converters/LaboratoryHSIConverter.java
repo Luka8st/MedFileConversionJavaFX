@@ -50,9 +50,9 @@ public class LaboratoryHSIConverter {
     private double[] positions;
     private double[] wavelengths;
 
-    private static final int NUM_WAVELENGTHS = 2048; // 2048
-    private static final int NUM_SAMPLES = 1224; // 1224
-    private static final int NUM_POS_HSI = 400; // 400
+    private static int NUM_WAVELENGTHS; // 2048
+    private static int NUM_SAMPLES; // 1224
+    private static int NUM_POS_HSI; // 400
     private static final String HEADER_FILENAME_TEMPLATE = "_white_white.hdr";
     private static final String RAW_DATA_FILENAME_TEMPLATE = "_sample_raw_hsi.mat";
     private static final String WHITE_REFERENCE_FILENAME_TEMPLATE  = "_white_white.img";
@@ -81,21 +81,39 @@ public class LaboratoryHSIConverter {
         return wavelengths;
     }
 
-    public LaboratoryHSIConverter() throws DirectoryNotFoundException {
+    public void setBasePath(String basePath) {
+        this.basePath = basePath;
+    }
+
+    public void setHdfDirectoryPath(String hdfDirectoryPath) {
+        this.hdfDirectoryPath = hdfDirectoryPath;
+    }
+
+    public String getBasePath() {
+        return basePath;
+    }
+
+    public String getHdfDirectoryPath() {
+        return hdfDirectoryPath;
+    }
+
+    public LaboratoryHSIConverter(String basePath, String hdfDirectoryPath) throws DirectoryNotFoundException {
         //    String basePath = System.getenv("BASE_DIR");
 
-        System.out.print("Enter the path to the directory that contains all the necessary files: ");
-        String basePath = (new Scanner(System.in)).nextLine();
+//        System.out.print("Enter the path to the directory that contains all the necessary files: ");
+//        String basePath = (new Scanner(System.in)).nextLine();
         if (!Files.exists(Path.of(basePath))) throw new DirectoryNotFoundException("Directory with the given path doesn't exist");
 
         dataMap= new Hashtable<>();
         manifestFiles = new ArrayList<Triplet<String, String, String>>();
         this.basePath = basePath;
+        this.hdfDirectoryPath = hdfDirectoryPath;
+
     }
 
     public void run() throws Exception {
-        createHdfFile();
         findAllFiles();
+        createHdfFile();
         readHdrFile();
         storeMetadataXml();
         openRawDataFile();
@@ -133,6 +151,27 @@ public class LaboratoryHSIConverter {
 
     public void openRawDataFile() {
         read_file_id = H5.H5Fopen(rawDataPath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+
+        //-----------------------------------------------------------------------------------------
+
+        String datasetName = "/acquired";
+
+        int read_dataset_id = -1;
+        int read_dataspace_id = -1;
+
+        read_dataset_id = H5.H5Dopen(read_file_id, datasetName);
+        read_dataspace_id = H5.H5Dget_space(read_dataset_id);
+
+        // Get the dimensions of the dataspace
+        long[] readdims = new long[3]; // Adjust the size of the array based on the expected number of dimensions
+        H5.H5Sget_simple_extent_dims(read_dataspace_id, readdims, null);
+
+        // Print the dimensions
+        System.out.println("Read Dimensions: " + Arrays.toString(readdims));
+
+        NUM_POS_HSI = (int) readdims[0];
+        NUM_WAVELENGTHS = (int) readdims[1];
+        NUM_SAMPLES = (int) readdims[2];
     }
 
     public void readHdrFile() throws FileNotFoundException {
@@ -210,7 +249,7 @@ public class LaboratoryHSIConverter {
         storeStringAsAscii("metadata", xmlString);
 
         // just to check
-        stringToDom(xmlString, "metadata_lab.xml");
+        stringToDom(xmlString, hdfDirectoryPath + "\\metadata_lab.xml");
 
         manifestFiles.add(new Triplet<>(hdfDirectoryPath + "\\metadata.xml", "metadata", "xml"));
     }
@@ -256,8 +295,8 @@ public class LaboratoryHSIConverter {
     }
 
     public void createHdfFile() throws IOException, HDF5LibraryException {
-        System.out.print("Enter the path to the directory where you would like to store the HDF5 file: ");
-        hdfDirectoryPath = (new Scanner(System.in)).nextLine();
+//        System.out.print("Enter the path to the directory where you would like to store the HDF5 file: ");
+//        hdfDirectoryPath = (new Scanner(System.in)).nextLine();
         if (!Files.exists(Path.of(hdfDirectoryPath))) throw new DirectoryNotFoundException("Directory with the given path doesn't exist");
 
         String hdfPath = hdfDirectoryPath + "\\laboratory_hsi.h5";
@@ -455,7 +494,6 @@ public class LaboratoryHSIConverter {
                     HDF5Constants.H5T_NATIVE_FLOAT, reflectance_dataspace_id,
                     HDF5Constants.H5P_DEFAULT);
         }
-
 
         for (int i = 0; i < NUM_POS_HSI; i++) {
             long[] start = {i, 0, 0};  // Starting coordinates

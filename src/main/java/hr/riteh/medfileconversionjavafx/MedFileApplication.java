@@ -1,5 +1,6 @@
 package hr.riteh.medfileconversionjavafx;
 
+import hr.riteh.medfileconversionjavafx.constants.SceneConstants;
 import hr.riteh.medfileconversionjavafx.controllers.MedFileController;
 import hr.riteh.medfileconversionjavafx.converters.LaboratoryHSIConverter;
 import hr.riteh.medfileconversionjavafx.displayers.LaboratoryHSIDisplayer;
@@ -16,24 +17,16 @@ public class MedFileApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
 
-        LaboratoryHSIConverter laboratoryHSIConverter = new LaboratoryHSIConverter();
-        laboratoryHSIConverter.run();
-
         FXMLLoader fxmlLoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/med-file-view.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 320, 240);
+        Scene scene = new Scene(fxmlLoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
 
-        LaboratoryHSIDisplayer laboratoryHSIDisplayer = new LaboratoryHSIDisplayer(
-                laboratoryHSIConverter.getDataMap(),
-                laboratoryHSIConverter.getPositions(),
-                laboratoryHSIConverter.getWavelengths(),
-                scene
-        );
+        MedFileController medFileController = fxmlLoader.getController();
+        medFileController.setStage(stage);
+//        medFileController.setLaboratoryHSIDisplayer(laboratoryHSIDisplayer);
 
-        MedFileController controller = fxmlLoader.getController();
-        controller.setLaboratoryHSIDisplayer(laboratoryHSIDisplayer);
+//        controller.generateAndDisplayNewImage();
 
-
-        stage.setTitle("Hello!");
+        stage.setTitle("MedFileConversionJavaFX");
         stage.setScene(scene);
         stage.show();
     }
