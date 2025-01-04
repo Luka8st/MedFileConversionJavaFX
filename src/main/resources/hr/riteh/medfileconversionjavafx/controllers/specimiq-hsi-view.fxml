@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<!--<?xml version="1.0" encoding="UTF-8"?>
+
+        <?import javafx.geometry.Insets?>
+        <?import javafx.scene.control.Button?>
+        <?import javafx.scene.control.Label?>
+        <?import javafx.scene.image.ImageView?>
+        <?import javafx.scene.layout.VBox?>
+        <?import javafx.scene.layout.HBox?>
+        <?import javafx.scene.control.ChoiceBox?>
+        <?import javafx.collections.FXCollections?>
+        <?import java.lang.String?>
+        <?import javafx.scene.control.Tab?>
+        <?import javafx.scene.control.TabPane?>
+
+        <?import javafx.scene.layout.AnchorPane?>
+        <?import java.lang.Double?>
+        <?import javafx.scene.control.TextArea?>
+        <?import javafx.scene.control.ScrollPane?>
+        <TabPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hr.riteh.medfileconversionjavafx.controllers.SpecimIQHSIController" tabClosingPolicy="UNAVAILABLE">
+
+
+            <tabs>
+                <Tab text="Results Data">
+
+                    <ScrollPane fitToWidth="true" fitToHeight="true">
+                        <AnchorPane>
+                            <ChoiceBox fx:id="pngChoiceBox" AnchorPane.topAnchor="20.0" AnchorPane.leftAnchor="20.0" />
+                            <ImageView fx:id="pngImageView" fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" AnchorPane.topAnchor="60.0" AnchorPane.leftAnchor="20.0" />
+
+                            <TextArea fx:id="resultMetadataTextArea" editable="false" AnchorPane.topAnchor="700.0" AnchorPane.leftAnchor="20.0"  prefHeight="200.0" prefWidth="300.0" wrapText="true" padding=""/>
+                        </AnchorPane>
+                    </ScrollPane>
+                </Tab>
+                <Tab text="Capture Data">
+                    <VBox alignment="CENTER" spacing="20.0">
+                        <ChoiceBox fx:id="datasetChoiceBox" />
+                        <ImageView fx:id="imageView" fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" />
+                        <HBox alignment="CENTER" spacing="20.0">
+                            <Button fx:id="prevBtn" disable="true" onAction="#onPrevBtnClick" text="Previous slice" />
+                            <Button fx:id="nextBtn" disable="true" onAction="#onNextBtnClick" text="Next slice" />
+                            <Button fx:id="slideBtn" disable="true" onAction="#onSlideBtnClick" text="Start Slideshow" />
+                        </HBox>
+                    </VBox>
+                </Tab>
+            </tabs>
+        </TabPane>-->
+
+<TabPane xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hr.riteh.medfileconversionjavafx.controllers.SpecimIQHSIController">
+    <tabs>
+        <Tab text="Capture Data">
+            <VBox alignment="CENTER" spacing="20.0">
+                <ChoiceBox fx:id="datasetChoiceBox">
+               <VBox.margin>
+                  <Insets top="45.0" />
+               </VBox.margin></ChoiceBox>
+                <ImageView fx:id="imageView" fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" />
+                <HBox alignment="CENTER" spacing="20.0">
+                    <Button fx:id="prevBtn" disable="true" onAction="#onPrevBtnClick" text="Previous slice" />
+                    <Button fx:id="nextBtn" disable="true" onAction="#onNextBtnClick" text="Next slice" />
+                    <Button fx:id="slideBtn" disable="true" onAction="#onSlideBtnClick" text="Start Slideshow" />
+                </HBox>
+                <TextArea fx:id="captureMetadataTextArea" editable="false" prefHeight="400.0" prefWidth="300.0" wrapText="true">
+                    <VBox.margin>
+                        <Insets bottom="20.0" />
+                    </VBox.margin>
+                </TextArea>
+            </VBox>
+        </Tab>
+        <Tab text="Results Data">
+            <VBox alignment="CENTER" spacing="20.0">
+<!--                <ScrollPane fitToWidth="true" fitToHeight="true">-->
+                    <ChoiceBox fx:id="pngChoiceBox">
+               <VBox.margin>
+                  <Insets />
+               </VBox.margin></ChoiceBox>
+                    <ImageView fx:id="pngImageView" fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true" />
+                    <TextArea fx:id="resultMetadataTextArea" editable="false" prefHeight="400.0" prefWidth="300.0" wrapText="true">
+                        <VBox.margin>
+                            <Insets bottom="20.0" />
+                        </VBox.margin>
+                    </TextArea>
+<!--                </ScrollPane>-->
+            </VBox>
+        </Tab>
+    </tabs>
+</TabPane>

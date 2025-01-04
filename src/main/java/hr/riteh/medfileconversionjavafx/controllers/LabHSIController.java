@@ -2,6 +2,8 @@ package hr.riteh.medfileconversionjavafx.controllers;
 
 import hr.riteh.medfileconversionjavafx.displayers.LaboratoryHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.helper.Dimension;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
@@ -11,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
@@ -58,14 +61,15 @@ public class LabHSIController {
     @FXML
     private Button slideBtn;
 
-    @FXML
-    private Button slideStopBtn;
+//    @FXML
+//    private Button slideStopBtn;
 
     @FXML
     private TextArea metadataTextArea;
 
     private LaboratoryHSIDisplayer laboratoryHSIDisplayer;
     private boolean slideshowActive;
+    private Timeline slideshowTimeline;
     private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength");
 
     @FXML
@@ -78,7 +82,7 @@ public class LabHSIController {
         generateAndDisplayNewImage();
 
         slideBtn.setDisable(false);
-        slideStopBtn.setDisable(true);
+//        slideStopBtn.setDisable(true);
         prevBtn.setDisable(false);
         nextBtn.setDisable(false);
         selectBtn.setDisable(false);
@@ -130,20 +134,20 @@ public class LabHSIController {
         Task<Void> displayTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                nextBtn.setDisable(true);
-                prevBtn.setDisable(true);
-                selectBtn.setDisable(true);
-                slideBtn.setDisable(true);
-                selectedSliceField.setDisable(true);
-                slideStopBtn.setDisable(true);
+//                nextBtn.setDisable(true);
+//                prevBtn.setDisable(true);
+//                selectBtn.setDisable(true);
+//                slideBtn.setDisable(true);
+//                selectedSliceField.setDisable(true);
+//                slideStopBtn.setDisable(true);
 
                 generateAndDisplayNewImage();
 
-                nextBtn.setDisable(false);
-                prevBtn.setDisable(false);
-                selectBtn.setDisable(false);
-                slideBtn.setDisable(false);
-                selectedSliceField.setDisable(false);
+//                nextBtn.setDisable(false);
+//                prevBtn.setDisable(false);
+//                selectBtn.setDisable(false);
+//                slideBtn.setDisable(false);
+//                selectedSliceField.setDisable(false);
                 return null;
             }
         };
@@ -157,20 +161,20 @@ public class LabHSIController {
         Task<Void> displayTask = new Task<>() {
             @Override
             protected Void call() throws Exception {
-                nextBtn.setDisable(true);
-                prevBtn.setDisable(true);
-                selectBtn.setDisable(true);
-                slideBtn.setDisable(true);
-                selectedSliceField.setDisable(true);
-                slideStopBtn.setDisable(true);
+//                nextBtn.setDisable(true);
+//                prevBtn.setDisable(true);
+//                selectBtn.setDisable(true);
+//                slideBtn.setDisable(true);
+//                selectedSliceField.setDisable(true);
+//                slideStopBtn.setDisable(true);
 
                 generateAndDisplayNewImage();
 
-                nextBtn.setDisable(false);
-                prevBtn.setDisable(false);
-                selectBtn.setDisable(false);
-                slideBtn.setDisable(false);
-                selectedSliceField.setDisable(false);
+//                nextBtn.setDisable(false);
+//                prevBtn.setDisable(false);
+//                selectBtn.setDisable(false);
+//                slideBtn.setDisable(false);
+//                selectedSliceField.setDisable(false);
                 return null;
             }
         };
@@ -194,9 +198,34 @@ public class LabHSIController {
         generateAndDisplayNewImage();
     }
 
+    private void startSlideshow() {
+        slideBtn.setText("Stop Slideshow");
+        prevBtn.setDisable(true);
+        nextBtn.setDisable(true);
+        selectBtn.setDisable(true);
+
+        slideshowTimeline = new Timeline(new KeyFrame(Duration.millis(500), event -> {
+            laboratoryHSIDisplayer.incrementSelectedSlice();
+            generateAndDisplayNewImage();
+        }));
+        slideshowTimeline.setCycleCount(Timeline.INDEFINITE);
+        slideshowTimeline.play();
+    }
+
+    private void stopSlideshow() {
+        slideBtn.setText("Start Slideshow");
+        prevBtn.setDisable(false);
+        nextBtn.setDisable(false);
+        selectBtn.setDisable(false);
+
+        if (slideshowTimeline != null) {
+            slideshowTimeline.stop();
+        }
+    }
+
     @FXML
     protected void onSlideshowBtnClick() {
-        slideshowActive = true;
+        /*slideshowActive = true;
         Task<Void> slideshowTask = new Task<>() {
             @Override
             protected Void call() throws InterruptedException {
@@ -228,7 +257,13 @@ public class LabHSIController {
 
         Thread thread = new Thread(slideshowTask);
         thread.setDaemon(true); // Optional: Allows the thread to exit when the application exits
-        thread.start();
+        thread.start();*/
+
+        if (slideshowTimeline == null || slideshowTimeline.getStatus() == Timeline.Status.STOPPED) {
+            startSlideshow();
+        } else {
+            stopSlideshow();
+        }
     }
 
     @FXML

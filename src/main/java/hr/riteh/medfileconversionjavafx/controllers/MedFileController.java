@@ -3,17 +3,16 @@ package hr.riteh.medfileconversionjavafx.controllers;
 import hr.riteh.medfileconversionjavafx.MedFileApplication;
 import hr.riteh.medfileconversionjavafx.constants.SceneConstants;
 import hr.riteh.medfileconversionjavafx.converters.LaboratoryHSIConverter;
+import hr.riteh.medfileconversionjavafx.converters.SpecimIQHSIConverter;
 import hr.riteh.medfileconversionjavafx.displayers.LaboratoryHSIDisplayer;
+import hr.riteh.medfileconversionjavafx.displayers.SpecimIQHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.exceptions.DirectoryNotFoundException;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
@@ -52,6 +51,14 @@ public class MedFileController {
     private Button selectLoadDirectoryBtn;
     @FXML
     private Button selectStoreDirectoryBtn;
+    @FXML
+    private ChoiceBox<String> imageFormatBox;
+
+    @FXML
+    public void initialize() {
+        // Set the default value for imageFormatBox
+        imageFormatBox.setValue("Laboratory-HSI");
+    }
 
     public void setStage(Stage stage) {
         this.stage = stage;
@@ -210,10 +217,6 @@ public class MedFileController {
     @FXML
     protected void onLoadBtnClick() throws DirectoryNotFoundException {
 
-        FXMLLoader fxmlLabHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/lab-hsi-view.fxml"));
-        LaboratoryHSIConverter laboratoryHSIConverter = new LaboratoryHSIConverter(loadDirectory.getAbsolutePath(), storeDirectory.getAbsolutePath());
-
-
         // Create a ProgressIndicator
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setMaxSize(100, 100);
@@ -227,7 +230,13 @@ public class MedFileController {
         Scene currentScene = stage.getScene();
         ((Pane) currentScene.getRoot()).getChildren().add(stackPane);
 
+        if (imageFormatBox.getValue().equals("Laboratory-HSI")) loadLabHsiScreen(currentScene, stackPane);
+        else if (imageFormatBox.getValue().equals("SpecimIQ-HSI")) loadSpecimIQScreen(currentScene, stackPane);
+    }
 
+    private void loadLabHsiScreen(Scene currentScene, Pane stackPane) throws DirectoryNotFoundException {
+        FXMLLoader fxmlLabHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/lab-hsi-view.fxml"));
+        LaboratoryHSIConverter laboratoryHSIConverter = new LaboratoryHSIConverter(loadDirectory.getAbsolutePath(), storeDirectory.getAbsolutePath());
 
         Task<Void> task = new Task<>() {
             @Override
@@ -306,5 +315,84 @@ public class MedFileController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void loadSpecimIQScreen(Scene currentScene, Pane stackPane) throws DirectoryNotFoundException {
+        FXMLLoader fxmlSpecimIQHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/specimiq-hsi-view.fxml"));
+        SpecimIQHSIConverter specimIQHSIConverter = new SpecimIQHSIConverter(loadDirectory.getAbsolutePath(), storeDirectory.getAbsolutePath());
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                selectLoadDirectoryBtn.setDisable(true);
+                selectStoreDirectoryBtn.setDisable(true);
+                loadBtn.setDisable(true);
+                specimIQHSIConverter.run();
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+            Scene scene = null;
+            try {
+                scene = new Scene(fxmlSpecimIQHSILoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
+            } catch (IOException e) {
+                showAlert("Error", "Failed to load the new scene: " + e.getMessage());
+            }
+            stage.setScene(scene);
+
+            SpecimIQHSIDisplayer specimIQHSIDisplayer = new SpecimIQHSIDisplayer(
+                    specimIQHSIConverter.getHdfDirectoryPath(),
+                    specimIQHSIConverter.getImageName(),
+                    specimIQHSIConverter.getHdrMetadata(),
+                    specimIQHSIConverter.getResultsHdrMetadata()
+            );
+            SpecimIQHSIController specimIQHSIController = fxmlSpecimIQHSILoader.getController();
+            specimIQHSIController.setupDisplayer(specimIQHSIDisplayer);
+
+            Task<Void> displayTask = new Task<>() {
+                @Override
+                protected Void call() {
+                    specimIQHSIController.generateAndDisplayInitialImage();
+                    return null;
+                }
+            };
+            new Thread(displayTask).start();
+        });
+
+        task.setOnFailed(event -> {
+            Throwable e = task.getException();
+            if (e instanceof FileNotFoundException) {
+                showAlert("File Not Found", "Error: " + e.getMessage());
+            } else {
+                showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
+                System.out.println("Error: " + e.getMessage());
+                System.out.println("Cause: " + e.getCause());
+                e.printStackTrace();
+            }
+            // e.printStackTrace();
+
+            ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+            loadDirectorySet = false;
+            storeDirectorySet = false;
+            loadDirectoryLabel.setText("Selected: None");
+            storeDirectoryLabel.setText("Selected: None");
+
+            selectLoadDirectoryBtn.setDisable(false);
+            selectStoreDirectoryBtn.setDisable(false);
+            loadBtn.setDisable(true);
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true); // Optional: Allows the thread to exit when the application exits
+        thread.start();
+    }
+
+    @FXML
+    protected void onFormatChoiceMade() {
+        System.out.println("Selected format: " + imageFormatBox.getValue());
     }
 }
