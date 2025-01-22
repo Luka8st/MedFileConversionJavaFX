@@ -251,7 +251,8 @@ public class LaboratoryHSIConverter {
         // just to check
         stringToDom(xmlString, hdfDirectoryPath + "\\metadata_lab.xml");
 
-        manifestFiles.add(new Triplet<>(hdfDirectoryPath + "\\metadata.xml", "metadata", "xml"));
+//        manifestFiles.add(new Triplet<>(hdfDirectoryPath + "\\metadata.xml", "metadata", "xml"));
+        manifestFiles.add(new Triplet<>("metadata", "metadata", "xml"));
     }
 
     public void storeManifestXml() throws ParserConfigurationException, TransformerException, IOException, HDF5Exception {

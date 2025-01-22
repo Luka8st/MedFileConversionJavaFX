@@ -2,6 +2,7 @@ package hr.riteh.medfileconversionjavafx.converters;
 
 import hr.riteh.medfileconversionjavafx.exceptions.DirectoryNotFoundException;
 import hr.riteh.medfileconversionjavafx.helper.SpecimImageType;
+import hr.riteh.medfileconversionjavafx.helper.Triplet;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -27,10 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class SpecimIQHSIConverter {
@@ -44,6 +42,8 @@ public class SpecimIQHSIConverter {
     private int lines;
     private int bands;
     private Map<String, Object> resultsHdrMetadata = new HashMap<>();
+    List<Triplet<String, String, String>> manifestFiles; // (path, type, extension)
+
 
     public SpecimIQHSIConverter(String basePath, String hdfDirectoryPath) throws DirectoryNotFoundException {
         if (!Files.exists(Path.of(basePath)))
@@ -51,6 +51,7 @@ public class SpecimIQHSIConverter {
 
         this.basePath = basePath;
         this.hdfDirectoryPath = hdfDirectoryPath;
+        manifestFiles = new ArrayList<>();
     }
 
     public String getHdfDirectoryPath() {
@@ -95,6 +96,8 @@ public class SpecimIQHSIConverter {
         readPngFile(Path.of(basePath, "results", "RGBBACKGROUND_" + imageName + ".png").toString(), "rgbBackground");
         readPngFile(Path.of(basePath, "results", "RGBSCENE_" + imageName + ".png").toString(), "rgbScene");
         readPngFile(Path.of(basePath, "results", "RGBVIEWFINDER_" + imageName + ".png").toString(), "rgbViewfinder");
+
+        storeManifestXml();
         closeHdfFile();
     }
 
@@ -182,8 +185,10 @@ public class SpecimIQHSIConverter {
 
             if (metadataFilePath.isPresent()) {
                 String metadataXml = Files.readString(metadataFilePath.get());
-                storeStringAsAscii("metadata.xml", metadataXml);
+                storeStringAsAscii("metadata", metadataXml);
                 stringToDom(metadataXml, hdfDirectoryPath + "\\metadata_specim.xml");
+
+                manifestFiles.add(new Triplet<>("metadata", "metadata", "xml"));
             } else {
                 System.err.println("No metadata file found in the directory: " + metadataDir);
             }
@@ -239,6 +244,9 @@ public class SpecimIQHSIConverter {
 
         // Just to check
         stringToDom(xmlString, hdfDirectoryPath + "\\" + filename + ".xml");
+
+        //manifestFiles.add(new Triplet<>(filename, "metadata", "xml"));
+        manifestFiles.add(new Triplet<>(filename, filename, "xml"));
     }
 
 //    private void processImage(String name, SpecimImageType imageType) throws IOException, ParserConfigurationException, TransformerException {
@@ -557,6 +565,8 @@ public class SpecimIQHSIConverter {
         }
 
         System.out.println("Data stored successfully!");
+        //manifestFiles.add(new Triplet<>(datasetName, "raw", "h5"));
+        manifestFiles.add(new Triplet<>(datasetName, datasetName, "h5"));
     }
 
     private void storePngData(float[][][] rawData, String datasetName) { // ovo bi se trebalo moci koristiti za sve png datoteke
@@ -615,10 +625,52 @@ public class SpecimIQHSIConverter {
         }
 
         System.out.println("Data stored successfully!");
+        //manifestFiles.add(new Triplet<>(datasetName, "png", "h5"));
+        manifestFiles.add(new Triplet<>(datasetName, datasetName, "h5"));
     }
 
     public void closeHdfFile() throws HDF5LibraryException {
         H5.H5Fclose(write_file_id);
+    }
+
+    public void storeManifestXml() throws ParserConfigurationException, TransformerException, IOException, HDF5Exception {
+        // Create a DocumentBuilder
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+
+        // Create a new Document
+        Document document = builder.newDocument();
+
+        // Create root element
+        Element root = document.createElement("manifest");
+        document.appendChild(root);
+
+        for (int i=0; i<manifestFiles.size(); i++) {
+            Element sub = document.createElement("file");
+            sub.appendChild(document.createTextNode(manifestFiles.get(i).getFirst()));
+            sub.setAttribute("type", manifestFiles.get(i).getSecond());
+            sub.setAttribute("extension", manifestFiles.get(i).getThird());
+
+            root.appendChild(sub);
+        }
+
+
+        // Write to XML file
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+
+//        DOMSource source = new DOMSource(document);
+//        StreamResult result = new StreamResult("C:/Users/LukaBursic/Desktop/output.xml");
+//        transformer.transform(source, result);
+
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(document), new StreamResult(writer));
+        String xmlString = writer.getBuffer().toString();
+
+        storeStringAsAscii("manifest", xmlString);
+
+        // just to check
+        stringToDom(xmlString, hdfDirectoryPath + "\\manifest_specim.xml");
     }
 
     private void storeStringAsAscii (String datasetName, String str) throws HDF5Exception {

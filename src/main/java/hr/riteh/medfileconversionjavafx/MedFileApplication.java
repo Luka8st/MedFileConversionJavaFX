@@ -22,9 +22,6 @@ public class MedFileApplication extends Application {
 
         MedFileController medFileController = fxmlLoader.getController();
         medFileController.setStage(stage);
-//        medFileController.setLaboratoryHSIDisplayer(laboratoryHSIDisplayer);
-
-//        controller.generateAndDisplayNewImage();
 
         stage.setTitle("MedFileConversionJavaFX");
         stage.setScene(scene);

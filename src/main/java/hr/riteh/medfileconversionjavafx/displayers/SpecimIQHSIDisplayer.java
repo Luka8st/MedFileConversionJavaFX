@@ -20,9 +20,9 @@ public class SpecimIQHSIDisplayer {
     private Map<String, Object> resultMetadataMap;
     private Map<String, Object> captureMetadataMap;
 
-    public SpecimIQHSIDisplayer(String hdfDirectoryPath, String imageName, Map<String, Object> captureMetadataMap, Map<String, Object> resultMetadataMap) {
+    public SpecimIQHSIDisplayer(String hdfDirectoryPath, Map<String, Object> captureMetadataMap, Map<String, Object> resultMetadataMap) {
         this.hdfDirectoryPath = hdfDirectoryPath;
-        this.imageName = imageName;
+//        this.imageName = imageName;
 //        this.currentDataset = "rawData_" + imageName; // Default dataset
         this.currentDataset = "rawData"; // Default dataset
         this.captureMetadataMap = captureMetadataMap;

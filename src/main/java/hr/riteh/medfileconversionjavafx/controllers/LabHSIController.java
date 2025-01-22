@@ -15,17 +15,14 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.commons.imaging.ImageFormats;
-import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.ImageWriteException;
 import org.apache.commons.imaging.Imaging;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 public class LabHSIController {
     @FXML
@@ -61,14 +58,10 @@ public class LabHSIController {
     @FXML
     private Button slideBtn;
 
-//    @FXML
-//    private Button slideStopBtn;
-
     @FXML
     private TextArea metadataTextArea;
 
     private LaboratoryHSIDisplayer laboratoryHSIDisplayer;
-    private boolean slideshowActive;
     private Timeline slideshowTimeline;
     private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength");
 
@@ -82,7 +75,6 @@ public class LabHSIController {
         generateAndDisplayNewImage();
 
         slideBtn.setDisable(false);
-//        slideStopBtn.setDisable(true);
         prevBtn.setDisable(false);
         nextBtn.setDisable(false);
         selectBtn.setDisable(false);
@@ -225,50 +217,11 @@ public class LabHSIController {
 
     @FXML
     protected void onSlideshowBtnClick() {
-        /*slideshowActive = true;
-        Task<Void> slideshowTask = new Task<>() {
-            @Override
-            protected Void call() throws InterruptedException {
-                slideBtn.setDisable(true);
-                slideStopBtn.setDisable(false);
-                prevBtn.setDisable(true);
-                nextBtn.setDisable(true);
-                selectBtn.setDisable(true);
-
-                while (slideshowActive) {
-                    Platform.runLater(() -> {
-                        laboratoryHSIDisplayer.incrementSelectedSlice();
-                        generateAndDisplayNewImage();
-                    });
-                    Thread.sleep(500);  // Delay of 500 milliseconds
-                }
-
-                slideBtn.setDisable(false);
-                slideStopBtn.setDisable(true);
-                prevBtn.setDisable(false);
-                nextBtn.setDisable(false);
-                selectBtn.setDisable(false);
-                return null;
-            }
-        };
-
-        // Run the task on a separate thread
-//        new Thread(slideshowTask).start();
-
-        Thread thread = new Thread(slideshowTask);
-        thread.setDaemon(true); // Optional: Allows the thread to exit when the application exits
-        thread.start();*/
-
         if (slideshowTimeline == null || slideshowTimeline.getStatus() == Timeline.Status.STOPPED) {
             startSlideshow();
         } else {
             stopSlideshow();
         }
-    }
-
-    @FXML
-    protected void onSlideshowStopBtnClick() {
-        slideshowActive = false;
     }
 
     @FXML
@@ -281,66 +234,6 @@ public class LabHSIController {
         String selectedDim = dimensionBox.getValue().toString();
         System.out.println(selectedDim.equalsIgnoreCase(laboratoryHSIDisplayer.getSelectedDimension().toString()));
         if (!selectedDim.equalsIgnoreCase(laboratoryHSIDisplayer.getSelectedDimension().toString())) {
-//
-//            switch (selectedDim) {
-//                case "POSITIONS": {
-//                    laboratoryHSIDisplayer.setSelectedDimension(Dimension.POSITIONS);
-//                    laboratoryHSIDisplayer.setFirstDimension(Dimension.WAVELENGTHS);
-//                    laboratoryHSIDisplayer.setSecondDimension(Dimension.SAMPLES);
-//
-//                    laboratoryHSIDisplayer.setNumSelectedDimension(400);
-//                    laboratoryHSIDisplayer.setNumFirstDimension(2048);
-//                    laboratoryHSIDisplayer.setNumSecondDimension(1224);
-//
-//                    selectedDimLabel.setText("Selected dimension: " + laboratoryHSIDisplayer.getSelectedDimension().toString().toLowerCase());
-//                    xAxisDimLabel.setText("X-axis: " + laboratoryHSIDisplayer.getFirstDimension().toString().toLowerCase());
-//                    yAxisDimLabel.setText("Y-axis: " + laboratoryHSIDisplayer.getSecondDimension().toString().toLowerCase());
-//
-//                    laboratoryHSIDisplayer.setMemoryDims(new long[]{1, 2048, 1224});
-//                    laboratoryHSIDisplayer.setBlock(new long[]{1, 2048, 1224});
-//                    generateAndDisplayInitialImage();
-//                    break;
-//                }
-//
-//                case "SAMPLES": {
-//                    laboratoryHSIDisplayer.setSelectedDimension(Dimension.SAMPLES);
-//                    laboratoryHSIDisplayer.setFirstDimension(Dimension.POSITIONS);
-//                    laboratoryHSIDisplayer.setSecondDimension(Dimension.WAVELENGTHS);
-//
-//                    laboratoryHSIDisplayer.setNumSelectedDimension(1224);
-//                    laboratoryHSIDisplayer.setNumFirstDimension(400);
-//                    laboratoryHSIDisplayer.setNumSecondDimension(2048);
-//
-//                    selectedDimLabel.setText("Selected dimension: " + laboratoryHSIDisplayer.getSelectedDimension().toString().toLowerCase());
-//                    xAxisDimLabel.setText("X-axis: " + laboratoryHSIDisplayer.getFirstDimension().toString().toLowerCase());
-//                    yAxisDimLabel.setText("Y-axis: " + laboratoryHSIDisplayer.getSecondDimension().toString().toLowerCase());
-//
-//                    laboratoryHSIDisplayer.setMemoryDims(new long[]{400, 2048, 1});
-//                    laboratoryHSIDisplayer.setBlock(new long[]{400, 2048, 1});
-//                    generateAndDisplayInitialImage();
-//                    break;
-//                }
-//
-//                case "WAVELENGTHS": {
-//                    laboratoryHSIDisplayer.setSelectedDimension(Dimension.WAVELENGTHS);
-//                    laboratoryHSIDisplayer.setFirstDimension(Dimension.POSITIONS);
-//                    laboratoryHSIDisplayer.setSecondDimension(Dimension.SAMPLES);
-//
-//                    laboratoryHSIDisplayer.setNumSelectedDimension(2048);
-//                    laboratoryHSIDisplayer.setNumFirstDimension(400);
-//                    laboratoryHSIDisplayer.setNumSecondDimension(1224);
-//
-//                    selectedDimLabel.setText("Selected dimension: " + laboratoryHSIDisplayer.getSelectedDimension().toString().toLowerCase());
-//                    xAxisDimLabel.setText("X-axis: " + laboratoryHSIDisplayer.getFirstDimension().toString().toLowerCase());
-//                    yAxisDimLabel.setText("Y-axis: " + laboratoryHSIDisplayer.getSecondDimension().toString().toLowerCase());
-//
-//                    laboratoryHSIDisplayer.setMemoryDims(new long[]{400, 1, 1224});
-//                    laboratoryHSIDisplayer.setBlock(new long[]{400, 1, 1224});
-//                    generateAndDisplayInitialImage();
-//                    break;
-//                }
-//            }
-
             switch (selectedDim) {
                 case "POSITIONS" -> laboratoryHSIDisplayer.resetDisplayerOnSelectedDim(Dimension.POSITIONS, Dimension.WAVELENGTHS, Dimension.SAMPLES);
                 case "WAVELENGTHS" -> laboratoryHSIDisplayer.resetDisplayerOnSelectedDim(Dimension.WAVELENGTHS, Dimension.POSITIONS, Dimension.SAMPLES);

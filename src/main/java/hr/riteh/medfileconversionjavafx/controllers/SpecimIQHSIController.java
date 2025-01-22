@@ -59,7 +59,7 @@ public class SpecimIQHSIController {
 
     private SpecimIQHSIDisplayer specimIQHSIDisplayer;
     private Timeline slideshowTimeline;
-    private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength");
+    private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength", "wavelengths");
 
 
     @FXML
@@ -90,34 +90,6 @@ public class SpecimIQHSIController {
     }
 
     private void generateAndDisplayNewImage() {
-/*
-        // Generate the BufferedImage using the displayer
-        BufferedImage img = specimIQHSIDisplayer.getImg();
-
-        // Save the BufferedImage to a file
-        File tempFile = new File("tempImage.png");
-        try {
-            // Ensure the file does not exist before writing
-            if (tempFile.exists()) {
-                tempFile.delete(); // Delete existing file
-            }
-
-            // Write the BufferedImage using Apache Commons Imaging
-            Imaging.writeImage(img, tempFile, ImageFormats.PNG); // Correct usage, no null parameter needed
-
-            // Load the saved image into ImageView
-            Image image = new Image(tempFile.toURI().toString());
-            imageView.setImage(image);
-        } catch (ImageWriteException e) {
-            e.printStackTrace();
-            System.err.println("Error writing image: " + e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("I/O error: " + e.getMessage());
-        }
-
-//        Platform.runLater(() -> currentSlice.setText("Current slice: " + laboratoryHSIDisplayer.getSelectedSlice()));
-*/
         BufferedImage img = specimIQHSIDisplayer.getImg();
 
         // Convert BufferedImage to WritableImage
@@ -198,38 +170,6 @@ public class SpecimIQHSIController {
         generateAndDisplayPngImage();
     }
 
-    /*
-    private void generateAndDisplayPngImage() {
-        // Generate the BufferedImage using the displayer
-        BufferedImage img = specimIQHSIDisplayer.getPngImg(pngChoiceBox.getValue());
-
-        // Save the BufferedImage to a file
-        File tempFile = new File("tempPngImage.png");
-        try {
-            // Ensure the file does not exist before writing
-            if (tempFile.exists()) {
-                tempFile.delete(); // Delete existing file
-            }
-
-            // Write the BufferedImage using Apache Commons Imaging
-            Imaging.writeImage(img, tempFile, ImageFormats.PNG); // Correct usage, no null parameter needed
-
-            // Load the saved image into ImageView
-            Image image = new Image(tempFile.toURI().toString());
-            pngImageView.setImage(image);
-        } catch (ImageWriteException e) {
-            e.printStackTrace();
-            System.err.println("Error writing image: " + e.getMessage());
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.err.println("I/O error: " + e.getMessage());
-        }
-
-
-//        Platform.runLater(() -> currentSlice.setText("Current slice: " + laboratoryHSIDisplayer.getSelectedSlice()));
-
-    }*/
-
     private void generateAndDisplayPngImage() {
         // Generate the BufferedImage using the displayer
         BufferedImage img = specimIQHSIDisplayer.getPngImg(pngChoiceBox.getValue());
@@ -258,7 +198,7 @@ public class SpecimIQHSIController {
                 metadata.append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
             }
         }
-        System.out.println("capture metadata " + metadata.toString());
+        System.out.println("capture metadata " + metadata);
         captureMetadataTextArea.setText(metadata.toString());
     }
 }

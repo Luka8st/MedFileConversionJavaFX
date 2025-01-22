@@ -1,39 +1,96 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.String?>
+<?import javafx.collections.FXCollections?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.collections.FXCollections?>
-<?import java.lang.String?>
-<VBox alignment="CENTER" prefHeight="341.0" prefWidth="372.0" spacing="20.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hr.riteh.medfileconversionjavafx.controllers.MedFileController">
-    <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-    </padding>
+<?import javafx.scene.control.ProgressIndicator?>
+<VBox fx:id="vbox" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="hr.riteh.medfileconversionjavafx.controllers.MedFileController">
+    <HBox fx:id="mainHBox" alignment="CENTER" spacing="40.0" >
+        <!-- Left Section -->
 
-    <ChoiceBox fx:id="imageFormatBox" onAction="#onFormatChoiceMade">
-        <items>
-            <FXCollections fx:factory="observableArrayList">
-                <String fx:value="Laboratory-HSI" />
-                <String fx:value="SpecimIQ-HSI" />
-            </FXCollections>
-        </items>
-    </ChoiceBox>
+        <VBox fx:id="leftVBox" alignment="TOP_CENTER" spacing="20.0" HBox.hgrow="ALWAYS">
+            <HBox.margin>
+                <Insets bottom="200.0" top="200.0" />
+            </HBox.margin>
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
 
-    <VBox alignment="CENTER" spacing="5.0">
-        <Button fx:id="selectLoadDirectoryBtn" onAction="#onSelectLoadDirectoryClick" text="Select directory to load files from" />
-        <Label fx:id="loadDirectoryLabel" text="Selected: None" style="-fx-text-fill: grey;"/>
-    </VBox>
+            <Label text="Process data and display" />
 
-    <VBox alignment="CENTER" spacing="5.0">
-        <Button fx:id="selectStoreDirectoryBtn" onAction="#onSelectStoreDirectoryClick" text="Select directory to store results to" />
-        <Label fx:id="storeDirectoryLabel" text="Selected: None" style="-fx-text-fill: grey;"/>
-    </VBox>
+            <!-- ChoiceBox for Image Format -->
+            <ChoiceBox fx:id="imageFormatBox" onAction="#onFormatChoiceMade">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Laboratory-HSI" />
+                        <String fx:value="SpecimIQ-HSI" />
+                    </FXCollections>
+                </items>
+            </ChoiceBox>
 
-    <Button fx:id="loadBtn" disable="true" onAction="#onLoadBtnClick" text="Generate and display the image" />
+            <!-- Load Directory Selection -->
+            <VBox alignment="CENTER" spacing="5.0">
+                <Button fx:id="selectLoadDirectoryBtn" onAction="#onSelectLoadDirectoryClick" text="Select directory to load files from" />
+                <Label fx:id="loadDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
+            </VBox>
 
+            <!-- Store Directory Selection -->
+            <VBox alignment="CENTER" spacing="5.0">
+                <Button fx:id="selectStoreDirectoryBtn" onAction="#onSelectStoreDirectoryClick" text="Select directory to store results to" />
+                <Label fx:id="storeDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+            <!-- Generate and Display Button -->
+            <Button fx:id="loadBtn" disable="true" onAction="#onLoadBtnClick" text="Generate and display" />
+        </VBox>
+
+        <Separator fx:id="verticalSeparator" orientation="VERTICAL" prefHeight="50.0">
+          <HBox.margin>
+             <Insets bottom="60.0" top="40.0" />
+          </HBox.margin>
+        </Separator>
+
+        <!-- Right Section -->
+        <VBox fx:id="rightVBox" alignment="TOP_CENTER" spacing="20.0" HBox.hgrow="ALWAYS">
+            <HBox.margin>
+                <Insets bottom="200.0" top="200.0" />
+            </HBox.margin>
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+
+            <Label text="Display data" />
+
+            <!-- ChoiceBox for Image Format -->
+            <ChoiceBox fx:id="displayImageFormatBox" onAction="#onDisplayFormatChoiceMade">
+                <items>
+                    <FXCollections fx:factory="observableArrayList">
+                        <String fx:value="Laboratory-HSI" />
+                        <String fx:value="SpecimIQ-HSI" />
+                    </FXCollections>
+                </items>
+            </ChoiceBox>
+
+            <!-- Store Directory Selection -->
+            <VBox alignment="CENTER" spacing="5.0">
+                <Button fx:id="selectDisplayDirectoryBtn" onAction="#onSelectDisplayDirectoryClick" text="Select directory to display results from" />
+                <Label fx:id="displayDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
+            </VBox>
+
+            <Region VBox.vgrow="ALWAYS" />
+
+            <Button fx:id="displayBtn" alignment="BOTTOM_CENTER" disable="true" onAction="#onDisplayBtnClick" text="Display" />
+        </VBox>
+
+    </HBox>
 </VBox>
