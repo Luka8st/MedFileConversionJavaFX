@@ -1,6 +1,7 @@
 package hr.riteh.medfileconversionjavafx.controllers;
 
 import hr.riteh.medfileconversionjavafx.displayers.SpecimIQHSIDisplayer;
+import hr.riteh.medfileconversionjavafx.helper.Dimension;
 import hr.riteh.medfileconversionjavafx.helper.SpecimImageType;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -8,9 +9,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.embed.swing.SwingFXUtils;
 
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.TextArea;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -36,14 +35,14 @@ public class SpecimIQHSIController {
     @FXML
     private ChoiceBox<SpecimImageType> datasetChoiceBox;
 
-    @FXML
+    /*@FXML
     private Button nextBtn;
 
     @FXML
     private Button prevBtn;
 
     @FXML
-    private Button slideBtn;
+    private Button slideBtn;*/
 
     @FXML
     private ChoiceBox<String> pngChoiceBox;
@@ -57,10 +56,29 @@ public class SpecimIQHSIController {
     @FXML
     public TextArea captureMetadataTextArea;
 
+    @FXML
+    public Slider slider;
+
+    @FXML
+    public Button selectBtn;
+
+    @FXML
+    public TextField selectedSliceField;
+
+    @FXML
+    public Label currentSlice;
+
+    @FXML
+    private Label startSliceLabel;
+
+    @FXML
+    private Label endSliceLabel;
+
     private SpecimIQHSIDisplayer specimIQHSIDisplayer;
     private Timeline slideshowTimeline;
     private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength", "wavelengths");
 
+    private String[] wavelengths;
 
     @FXML
     public void initialize() {
@@ -97,6 +115,17 @@ public class SpecimIQHSIController {
 
         // Set the WritableImage to the ImageView
         imageView.setImage(writableImage);
+
+        /*Platform.runLater(() -> currentSlice.setText("Current slice: " + specimIQHSIDisplayer.getSelectedSlice() +
+                "; wavelength = " + wavelengths[specimIQHSIDisplayer.getSelectedSlice()] + " nm " + wavelengths.length))*/
+
+        Platform.runLater(() -> currentSlice.setText("Current slice: " + specimIQHSIDisplayer.getSelectedSlice()));
+    }
+
+    @FXML
+    protected void onSliderChange() {
+        specimIQHSIDisplayer.setSelectedSlice((int) slider.getValue() * specimIQHSIDisplayer.getLines()/100 - 1);
+        generateAndDisplayNewImage();
     }
 
     @FXML
@@ -120,10 +149,29 @@ public class SpecimIQHSIController {
         }
     }
 
+    @FXML
+    protected void onSelectBtnClick() {
+        int slice = 0;
+        try {
+            slice = Integer.parseInt(selectedSliceField.getText());
+        } catch (NumberFormatException e) {
+//            throw new RuntimeException(e);
+            selectedSliceField.setText("");
+            selectedSliceField.setPromptText("Please enter a valid number");
+            return;
+        }
+        specimIQHSIDisplayer.setSelectedSlice(slice);
+        selectedSliceField.setText("");
+        selectedSliceField.setPromptText("Enter selected slice");
+        generateAndDisplayNewImage();
+        slider.setValue((double) (slice + 1) * 100 / specimIQHSIDisplayer.getLines());
+    }
+
+
     private void startSlideshow() {
-        slideBtn.setText("Stop Slideshow");
+        /*slideBtn.setText("Stop Slideshow");
         prevBtn.setDisable(true);
-        nextBtn.setDisable(true);
+        nextBtn.setDisable(true);*/
         datasetChoiceBox.setDisable(true);
 
         slideshowTimeline = new Timeline(new KeyFrame(Duration.millis(500), event -> {
@@ -135,9 +183,9 @@ public class SpecimIQHSIController {
     }
 
     private void stopSlideshow() {
-        slideBtn.setText("Start Slideshow");
+        /*slideBtn.setText("Start Slideshow");
         prevBtn.setDisable(false);
-        nextBtn.setDisable(false);
+        nextBtn.setDisable(false);*/
         datasetChoiceBox.setDisable(false);
 
         if (slideshowTimeline != null) {
@@ -147,9 +195,9 @@ public class SpecimIQHSIController {
 
     private void updateButtonState() {
         boolean hasMultipleLines = specimIQHSIDisplayer.hasMultipleLines();
-        nextBtn.setDisable(!hasMultipleLines);
+        /*nextBtn.setDisable(!hasMultipleLines);
         prevBtn.setDisable(!hasMultipleLines);
-        slideBtn.setDisable(!hasMultipleLines);
+        slideBtn.setDisable(!hasMultipleLines);*/
     }
 
     public void setupDisplayer(SpecimIQHSIDisplayer specimIQHSIDisplayer) {
@@ -161,6 +209,10 @@ public class SpecimIQHSIController {
 
         displayCaptureMetadata();
         displayResultMetadata();
+        wavelengths = specimIQHSIDisplayer.getWavelengths();
+
+        startSliceLabel.setText("0");
+        endSliceLabel.setText(Integer.valueOf(specimIQHSIDisplayer.getLines() - 1).toString());
     }
 
     public void generateAndDisplayInitialImage() {

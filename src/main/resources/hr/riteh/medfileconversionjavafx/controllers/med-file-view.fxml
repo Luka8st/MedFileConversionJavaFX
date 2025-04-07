@@ -33,6 +33,7 @@
                     <FXCollections fx:factory="observableArrayList">
                         <String fx:value="Laboratory-HSI" />
                         <String fx:value="SpecimIQ-HSI" />
+                        <String fx:value="Microscopy-HSI" />
                     </FXCollections>
                 </items>
             </ChoiceBox>
@@ -77,6 +78,7 @@
                     <FXCollections fx:factory="observableArrayList">
                         <String fx:value="Laboratory-HSI" />
                         <String fx:value="SpecimIQ-HSI" />
+                        <String fx:value="Microscopy-HSI" />
                     </FXCollections>
                 </items>
             </ChoiceBox>

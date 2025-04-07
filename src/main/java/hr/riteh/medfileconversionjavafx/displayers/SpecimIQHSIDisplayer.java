@@ -37,6 +37,14 @@ public class SpecimIQHSIDisplayer {
         return captureMetadataMap;
     }
 
+    public String[] getWavelengths() {
+        return (String[]) captureMetadataMap.get("wavelength");
+    }
+
+    public int getLines() {
+        return lines;
+    }
+
     public void setCurrentDataset(String datasetName) {
         this.currentDataset = datasetName;
     }
@@ -57,6 +65,10 @@ public class SpecimIQHSIDisplayer {
 
     public void setSelectedSlice(int slice) {
         selectedSlice = Math.floorMod(slice, lines);
+    }
+
+    public int getSelectedSlice() {
+        return selectedSlice;
     }
 
     /*public BufferedImage getImg() {

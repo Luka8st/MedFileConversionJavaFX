@@ -10,6 +10,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 //import ncsa.hdf.object.h5.*;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -295,7 +296,7 @@ public class LaboratoryHSIConverter {
         stringToDom(xmlString, hdfDirectoryPath + "\\manifest_lab.xml");
     }
 
-    public void createHdfFile() throws IOException, HDF5LibraryException {
+    public void createHdfFile() throws IOException, HDF5LibraryException, InterruptedException {
 //        System.out.print("Enter the path to the directory where you would like to store the HDF5 file: ");
 //        hdfDirectoryPath = (new Scanner(System.in)).nextLine();
         if (!Files.exists(Path.of(hdfDirectoryPath))) throw new DirectoryNotFoundException("Directory with the given path doesn't exist");
@@ -303,15 +304,43 @@ public class LaboratoryHSIConverter {
         String hdfPath = hdfDirectoryPath + "\\laboratory_hsi.h5";
 
         Files.deleteIfExists(Paths.get(hdfPath));
+
         write_file_id = H5.H5Fcreate(hdfPath, HDF5Constants.H5F_ACC_TRUNC,
                 HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        /*if (Files.exists(Path.of(hdfPath))) {
+            closeHdfFile(); // Close the file if it is open
+            //FileDeleteStrategy.FORCE.delete(new File(hdfPath)); // Try to delete it
+            //Files.deleteIfExists(Path.of(hdfPath)); // Then delete it
+            //System.gc();
+
+            System.out.println("write file id: " + write_file_id);
+
+            write_file_id = H5.H5Fopen(hdfPath, HDF5Constants.H5F_ACC_RDONLY,
+                    HDF5Constants.H5P_DEFAULT);
+            clearFileContent(hdfPath); // Clear the content of the file
+        }
+        else {
+            write_file_id = H5.H5Fcreate(hdfPath, HDF5Constants.H5F_ACC_TRUNC,
+                    HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+        }*/
+
+    }
+
+    private void clearFileContent(String filePath) {
+        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+            // Opening the file in write mode with no content truncates it
+            System.out.println("File content cleared: " + filePath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void storeStringAsAscii(String datasetName, String str) throws HDF5Exception {
         long[] dimsStr = new long[]{str.length()};
         int str_dataspace_id = H5.H5Screate_simple(1, dimsStr, null);
 
-        int str_dataset_id = H5.H5Dcreate(write_file_id, datasetName,
+        int str_dataset_id = H5. H5Dcreate(write_file_id, datasetName,
                 HDF5Constants.H5T_NATIVE_CHAR, str_dataspace_id,
                 HDF5Constants.H5P_DEFAULT);
 
@@ -483,11 +512,11 @@ public class LaboratoryHSIConverter {
         float[] refls = new float[(int) (memoryDims[0] * memoryDims[1] * memoryDims[2])];
         long[] dims3D = {NUM_POS_HSI, NUM_WAVELENGTHS, NUM_SAMPLES};
 
-        write_group_id = H5.H5Gcreate(write_file_id, "g1",
-                HDF5Constants.H5P_DEFAULT);
+        //write_group_id = H5.H5Gcreate(write_file_id, "g1",
+        //        HDF5Constants.H5P_DEFAULT);
         reflectance_dataspace_id = H5.H5Screate_simple(3, dims3D, null);
 
-        if ((write_group_id >= 0) && (reflectance_dataspace_id >= 0)) {
+        if ((write_file_id >= 0) && (reflectance_dataspace_id >= 0)) {
 //            write_dataset_id = H5.H5Dcreate(write_group_id, "3D 64-bit double",
 //                    HDF5Constants.H5T_NATIVE_DOUBLE, write_dataspace_id,
 //                    HDF5Constants.H5P_DEFAULT);
@@ -527,8 +556,8 @@ public class LaboratoryHSIConverter {
         if (reflectance_dataspace_id >= 0)
             H5.H5Sclose(reflectance_dataspace_id);
 
-        if (write_group_id >= 0)
-            H5.H5Gclose(write_group_id);
+        //if (write_group_id >= 0)
+        //    H5.H5Gclose(write_group_id);
 
         manifestFiles.add(new Triplet<>("reflectance", "reflectance", "?"));
     }
@@ -576,7 +605,81 @@ public class LaboratoryHSIConverter {
     }
 
     public void closeHdfFile() throws HDF5LibraryException {
-        H5.H5Fclose(write_file_id);
+        //H5.H5Fclose(write_file_id);
+
+        System.out.println("ids: " + write_file_id + ", " + read_file_id);
+
+        if (write_file_id >= 0) {
+            H5.H5Fclose(write_file_id);
+            write_file_id = -1;
+        }
+        if (read_file_id >= 0) {
+            H5.H5Fclose(read_file_id);
+            read_file_id = -1;
+        }
+
+        System.out.println("HDF5 file closed successfully.");
+
+        //killProcess(hdfDirectoryPath + "\\laboratory_hsi.h5");
+
+        System.gc();
+        H5.H5garbage_collect();
+    }
+
+    public void killProcess(String filePath) {
+        System.out.println("killProcess() called for file: " + filePath);
+        try {
+            // Step 1: Use handle.exe to find the process using the file
+            Process handleProcess = new ProcessBuilder("handle.exe", "-accepteula", filePath).start();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(handleProcess.getInputStream()));
+
+            String line;
+            String pid = null;
+            while ((line = reader.readLine()) != null) {
+                System.out.println("line: " + line);
+                // Look for the PID in the output
+                if (line.contains("pid:")) {
+                    System.out.println("Handle output: " + line);
+                    pid = line.split("pid:")[1].split(" ")[1].trim();
+                    break;
+                }
+            }
+
+            reader.close();
+            handleProcess.waitFor();
+
+            if (pid != null) {
+                System.out.println("Process ID using the file: " + pid);
+
+                if (isCurrentJavaProcess(pid)) {
+                    System.out.println("The file is being used by the current Java process (PID: " + pid + "). Not killing the process.");
+                    return;
+                }
+
+                // Step 2: Kill the process using taskkill
+                Process killProcess = new ProcessBuilder("taskkill", "/PID", pid, "/F").start();
+                BufferedReader killReader = new BufferedReader(new InputStreamReader(killProcess.getInputStream()));
+
+                String killLine;
+                while ((killLine = killReader.readLine()) != null) {
+                    System.out.println(killLine);
+                }
+
+                killReader.close();
+                killProcess.waitFor();
+                System.out.println("Process " + pid + " terminated successfully.");
+            } else {
+                System.out.println("No process found using the file.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isCurrentJavaProcess(String pid) {
+        String currentPid = ProcessHandle.current().pid() + ""; // Get the current Java process ID
+        return currentPid.equals(pid);
     }
 }
 

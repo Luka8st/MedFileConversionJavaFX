@@ -1,5 +1,8 @@
 package hr.riteh.medfileconversionjavafx.controllers;
 
+import hr.riteh.medfileconversionjavafx.MedFileApplication;
+import hr.riteh.medfileconversionjavafx.constants.SceneConstants;
+import hr.riteh.medfileconversionjavafx.converters.LaboratoryHSIConverter;
 import hr.riteh.medfileconversionjavafx.displayers.LaboratoryHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.helper.Dimension;
 import javafx.animation.KeyFrame;
@@ -8,9 +11,12 @@ import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -46,24 +52,34 @@ public class LabHSIController {
     @FXML
     private ChoiceBox dimensionBox;
 
-    @FXML
+    /*@FXML
     private Button nextBtn;
 
     @FXML
-    private Button prevBtn;
+    private Button prevBtn;*/
 
     @FXML
     private Button selectBtn;
 
-    @FXML
-    private Button slideBtn;
+    /*@FXML
+    private Button slideBtn;*/
 
     @FXML
     private TextArea metadataTextArea;
 
+    @FXML
+    private Slider slider;
+
+    @FXML
+    private Label startSliceLabel;
+
+    @FXML
+    private Label endSliceLabel;
+
     private LaboratoryHSIDisplayer laboratoryHSIDisplayer;
     private Timeline slideshowTimeline;
     private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength");
+    private double[] wavelengths;
 
     @FXML
     public void initialize() {
@@ -74,9 +90,9 @@ public class LabHSIController {
     public void generateAndDisplayInitialImage() {
         generateAndDisplayNewImage();
 
-        slideBtn.setDisable(false);
-        prevBtn.setDisable(false);
-        nextBtn.setDisable(false);
+        //slideBtn.setDisable(false);
+        //prevBtn.setDisable(false);
+        //nextBtn.setDisable(false);
         selectBtn.setDisable(false);
     }
 
@@ -112,7 +128,9 @@ public class LabHSIController {
             System.err.println("I/O error: " + e.getMessage());
         }
 
-        Platform.runLater(() -> currentSlice.setText("Current slice: " + laboratoryHSIDisplayer.getSelectedSlice()));
+        Platform.runLater(() -> currentSlice.setText("Current slice: " + laboratoryHSIDisplayer.getSelectedSlice() +
+                (laboratoryHSIDisplayer.getSelectedDimension().equals(Dimension.WAVELENGTHS) ?
+                        "; wavelength = " + wavelengths[laboratoryHSIDisplayer.getSelectedSlice()] + " nm" : "")));
 //        slideBtn.setDisable(false);
 //        slideStopBtn.setDisable(true);
 //        prevBtn.setDisable(false);
@@ -188,12 +206,13 @@ public class LabHSIController {
         selectedSliceField.setText("");
         selectedSliceField.setPromptText("Enter selected slice");
         generateAndDisplayNewImage();
+        slider.setValue((double) (slice + 1) * 100 / laboratoryHSIDisplayer.getNumSelectedDimension());
     }
 
     private void startSlideshow() {
-        slideBtn.setText("Stop Slideshow");
-        prevBtn.setDisable(true);
-        nextBtn.setDisable(true);
+        //slideBtn.setText("Stop Slideshow");
+        //prevBtn.setDisable(true);
+        //nextBtn.setDisable(true);
         selectBtn.setDisable(true);
 
         slideshowTimeline = new Timeline(new KeyFrame(Duration.millis(500), event -> {
@@ -205,14 +224,26 @@ public class LabHSIController {
     }
 
     private void stopSlideshow() {
-        slideBtn.setText("Start Slideshow");
-        prevBtn.setDisable(false);
-        nextBtn.setDisable(false);
+        //slideBtn.setText("Start Slideshow");
+        //prevBtn.setDisable(false);
+        //nextBtn.setDisable(false);
         selectBtn.setDisable(false);
 
         if (slideshowTimeline != null) {
             slideshowTimeline.stop();
         }
+    }
+
+    private Stage stage;
+
+    private LaboratoryHSIConverter labHSIConverter;
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
+    }
+
+    public void setLabHSIConverter(LaboratoryHSIConverter labHSIConverter) {
+        this.labHSIConverter = labHSIConverter;
     }
 
     @FXML
@@ -225,6 +256,12 @@ public class LabHSIController {
     }
 
     @FXML
+    protected void onSliderChange() {
+        laboratoryHSIDisplayer.setSelectedSlice((int) slider.getValue() * laboratoryHSIDisplayer.getNumSelectedDimension()/100);
+        generateAndDisplayNewImage();
+    }
+
+    @FXML
     protected void onDimChoiceMade() {
         if (laboratoryHSIDisplayer == null) {
             System.err.println("LaboratoryHSIDisplayer is not initialized.");
@@ -232,6 +269,8 @@ public class LabHSIController {
         }
 
         String selectedDim = dimensionBox.getValue().toString();
+        slider.setDisable(selectedDim.equals("SAMPLES"));
+
         System.out.println(selectedDim.equalsIgnoreCase(laboratoryHSIDisplayer.getSelectedDimension().toString()));
         if (!selectedDim.equalsIgnoreCase(laboratoryHSIDisplayer.getSelectedDimension().toString())) {
             switch (selectedDim) {
@@ -244,22 +283,24 @@ public class LabHSIController {
             xAxisDimLabel.setText("X-axis: " + laboratoryHSIDisplayer.getFirstDimension().toString().toLowerCase());
             yAxisDimLabel.setText("Y-axis: " + laboratoryHSIDisplayer.getSecondDimension().toString().toLowerCase());
 
+            endSliceLabel.setText(Integer.valueOf(laboratoryHSIDisplayer.getNumSelectedDimension() - 1).toString());
+
 //            generateAndDisplayInitialImage();
             Task<Void> displayTask = new Task<>() {
                 @Override
                 protected Void call() {
-                    nextBtn.setDisable(true);
-                    prevBtn.setDisable(true);
+                    //nextBtn.setDisable(true);
+                    //prevBtn.setDisable(true);
                     selectBtn.setDisable(true);
-                    slideBtn.setDisable(true);
+                    //slideBtn.setDisable(true);
                     selectedSliceField.setDisable(true);
 
                     generateAndDisplayInitialImage();
 
-                    nextBtn.setDisable(false);
-                    prevBtn.setDisable(false);
+                    //nextBtn.setDisable(false);
+                    //prevBtn.setDisable(false);
                     selectBtn.setDisable(false);
-                    slideBtn.setDisable(false);
+                    //slideBtn.setDisable(false);
                     selectedSliceField.setDisable(false);
                     return null;
                 }
@@ -274,6 +315,9 @@ public class LabHSIController {
         xAxisDimLabel.setText("X-axis: " + laboratoryHSIDisplayer.getFirstDimension().toString().toLowerCase());
         yAxisDimLabel.setText("Y-axis: " + laboratoryHSIDisplayer.getSecondDimension().toString().toLowerCase());
         displayMetadata();
+        wavelengths = laboratoryHSIDisplayer.getWavelengths();
+        startSliceLabel.setText("0");
+        endSliceLabel.setText(Integer.valueOf(laboratoryHSIDisplayer.getNumSelectedDimension() - 1).toString());
     }
 
     public void setLaboratoryHSIDisplayer(LaboratoryHSIDisplayer laboratoryHSIDisplayer) {
@@ -288,5 +332,20 @@ public class LabHSIController {
             }
         }
         metadataTextArea.setText(metadata.toString());
+    }
+
+    @FXML
+    protected void onReturnBtnClick() throws IOException {
+        labHSIConverter.closeHdfFile();
+        //labHSIConverter.killProcess(labHSIConverter.getHdfDirectoryPath() + "\\laboratory_hsi.h5");
+
+        FXMLLoader fxmlMedFileLoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/med-file-view.fxml"));
+
+        Scene currentScene = stage.getScene();
+        Scene scene = new Scene(fxmlMedFileLoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
+        stage.setScene(scene);
+
+        MedFileController medFileController = fxmlMedFileLoader.getController();
+        medFileController.setStage(stage);
     }
 }

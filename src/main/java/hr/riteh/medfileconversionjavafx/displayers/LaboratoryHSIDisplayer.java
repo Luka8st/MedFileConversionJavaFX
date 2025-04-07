@@ -90,6 +90,10 @@ public class LaboratoryHSIDisplayer {
         this.numSelectedDimension = numSelectedDimension;
     }
 
+    public int getNumSelectedDimension() {
+        return numSelectedDimension;
+    }
+
     public void setNumFirstDimension(int numFirstDimension) {
         this.numFirstDimension = numFirstDimension;
     }
@@ -123,6 +127,10 @@ public class LaboratoryHSIDisplayer {
         for (Map.Entry<String, String> entry : metadataMap.entrySet()) {
             System.out.println(entry.getKey() + ": " + entry.getValue());
         }
+    }
+
+    public double[] getWavelengths() {
+        return wavelengths;
     }
 
     public void incrementSelectedSlice() {

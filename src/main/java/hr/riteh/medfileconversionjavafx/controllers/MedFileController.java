@@ -3,8 +3,10 @@ package hr.riteh.medfileconversionjavafx.controllers;
 import hr.riteh.medfileconversionjavafx.MedFileApplication;
 import hr.riteh.medfileconversionjavafx.constants.SceneConstants;
 import hr.riteh.medfileconversionjavafx.converters.LaboratoryHSIConverter;
+import hr.riteh.medfileconversionjavafx.converters.MicroscopyHSIConverter;
 import hr.riteh.medfileconversionjavafx.converters.SpecimIQHSIConverter;
 import hr.riteh.medfileconversionjavafx.displayers.LaboratoryHSIDisplayer;
+import hr.riteh.medfileconversionjavafx.displayers.MicroscopyHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.displayers.SpecimIQHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.exceptions.DirectoryNotFoundException;
 import hr.riteh.medfileconversionjavafx.readers.LaboratoryHSIReader;
@@ -169,6 +171,84 @@ public class MedFileController {
 
         if (imageFormatBox.getValue().equals("Laboratory-HSI")) loadLabHsiScreen(currentScene, stackPane);
         else if (imageFormatBox.getValue().equals("SpecimIQ-HSI")) loadSpecimIQScreen(currentScene, stackPane);
+        else if (imageFormatBox.getValue().equals("Microscopy-HSI")) loadMicroscopyScreen(currentScene, stackPane);
+    }
+
+    private void loadMicroscopyScreen(Scene currentScene, StackPane stackPane) throws DirectoryNotFoundException {
+        FXMLLoader fxmlMicroscopyHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/microscopy-hsi-view.fxml"));
+        MicroscopyHSIConverter microscopyHSIConverter = new MicroscopyHSIConverter(loadDirectory.getAbsolutePath(), storeDirectory.getAbsolutePath());
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                selectLoadDirectoryBtn.setDisable(true);
+                selectStoreDirectoryBtn.setDisable(true);
+                loadBtn.setDisable(true);
+                selectDisplayDirectoryBtn.setDisable(true);
+                displayBtn.setDisable(true);
+
+                microscopyHSIConverter.run();
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            try {
+                ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+                Scene scene = new Scene(fxmlMicroscopyHSILoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
+                stage.setScene(scene);
+
+                MicroscopyHSIDisplayer microscopyHSIDisplayer = new MicroscopyHSIDisplayer();
+                MicroscopyHSIController microscopyHSIController = fxmlMicroscopyHSILoader.getController();
+                microscopyHSIController.setupDisplayer(microscopyHSIDisplayer);
+                microscopyHSIController.setStage(stage);
+                microscopyHSIController.setMicroscopyHSIConverter(microscopyHSIConverter);
+
+                //System.out.println("metadata");
+                //laboratoryHSIDisplayer.printMetadata();
+
+                Task<Void> displayTask = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        //labHSIController.generateAndDisplayInitialImage();
+                        return null;
+                    }
+                };
+                new Thread(displayTask).start();
+            } catch (IOException e) {
+                // e.printStackTrace();
+                showAlert("Error", "Failed to load the new scene: " + e.getMessage());
+                System.out.println("Error: " + e.getMessage());
+            }
+        });
+
+        task.setOnFailed(event -> {
+            Throwable e = task.getException();
+            if (e instanceof FileNotFoundException) {
+                showAlert("File Not Found", "Error: " + e.getMessage());
+            } else {
+                showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
+            }
+            e.printStackTrace();
+
+            ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+            loadDirectorySet = false;
+            storeDirectorySet = false;
+            loadDirectoryLabel.setText("Selected: None");
+            storeDirectoryLabel.setText("Selected: None");
+
+            selectLoadDirectoryBtn.setDisable(false);
+            selectStoreDirectoryBtn.setDisable(false);
+            loadBtn.setDisable(true);
+            selectDisplayDirectoryBtn.setDisable(false);
+            displayBtn.setDisable(true);
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true); // Optional: Allows the thread to exit when the application exits
+        thread.start();
     }
 
     private void loadLabHsiScreen(Scene currentScene, Pane stackPane) throws DirectoryNotFoundException {
@@ -205,6 +285,8 @@ public class MedFileController {
                 );
                 LabHSIController labHSIController = fxmlLabHSILoader.getController();
                 labHSIController.setupDisplayer(laboratoryHSIDisplayer);
+                labHSIController.setStage(stage);
+                labHSIController.setLabHSIConverter(laboratoryHSIConverter);
 
                 System.out.println("metadata");
                 laboratoryHSIDisplayer.printMetadata();
@@ -220,6 +302,7 @@ public class MedFileController {
             } catch (IOException e) {
                 // e.printStackTrace();
                 showAlert("Error", "Failed to load the new scene: " + e.getMessage());
+                System.out.println("Error: " + e.getMessage());
             }
         });
 
@@ -230,7 +313,7 @@ public class MedFileController {
             } else {
                 showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
             }
-            // e.printStackTrace();
+            e.printStackTrace();
 
             ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
 
@@ -402,6 +485,7 @@ public class MedFileController {
             } catch (IOException e) {
                 // e.printStackTrace();
                 showAlert("Error", "Failed to load the new scene: " + e.getMessage());
+                System.out.println("Error: " + e.getMessage());
             }
 
         });

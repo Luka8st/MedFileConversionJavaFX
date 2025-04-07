@@ -6,7 +6,7 @@
 
     <groupId>hr.riteh</groupId>
     <artifactId>medFileConversionJavaFX</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>medFileConversionJavaFX</name>
 
     <properties>
@@ -71,13 +71,18 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-imaging</artifactId>
-            <version>1.0-alpha3</version> <!-- Check for the latest version -->
+            <version>1.0-alpha3</version>
         </dependency>
-
+        <dependency>
+            <groupId>io.github.fvarrui</groupId>
+            <artifactId>javapackager</artifactId>
+            <version>1.7.6</version>
+    </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -87,18 +92,16 @@
                     <target>17</target>
                 </configuration>
             </plugin>
+            <!-- JavaFX Maven Plugin -->
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Update mainClass to point to MyAppLauncher -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>
-                                hr.riteh.medfileconversionjavafx.MyAppLauncher
-                            </mainClass>
+                            <mainClass>hr.riteh.medfileconversionjavafx.MyAppLauncher</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
@@ -109,6 +112,60 @@
                     </execution>
                 </executions>
             </plugin>
+            <!-- Maven Shade Plugin for creating a fat jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>hr.riteh.medfileconversionjavafx.MyAppLauncher</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.github.fvarrui</groupId>
+                <artifactId>javapackager</artifactId>
+                <version>1.7.6</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>package</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>com.example.Main</mainClass> <!-- Zamijeni sa svojim Main class -->
+                            <bundleJre>true</bundleJre>
+                            <generateInstaller>true</generateInstaller>
+                            <platform>windows</platform>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/javapackager/JavaPackager</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
 </project>
