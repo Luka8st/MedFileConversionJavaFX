@@ -14,6 +14,44 @@ import javax.xml.transform.TransformerException;
 import java.io.IOException;
 
 public class MedFileApplication extends Application {
+    private static String loadDirectory;
+    private static String displayDirectory;
+    private static String imageFormat;
+    private static String displayImageFormat;
+
+
+    public static String getLoadDirectory() {
+        return loadDirectory;
+    }
+
+    public static String getDisplayDirectory() {
+        return displayDirectory;
+    }
+
+    public static String getImageFormat() {
+        return imageFormat;
+    }
+
+    public static String getDisplayImageFormat() {
+        return displayImageFormat;
+    }
+
+    public static void setLoadDirectory(String loadDir) {
+        loadDirectory = loadDir;
+    }
+
+    public static void setDisplayDirectory(String displayDir) {
+        displayDirectory = displayDir;
+    }
+
+    public static void setImageFormat(String imageFormat) {
+        MedFileApplication.imageFormat = imageFormat;
+    }
+
+    public static void setDisplayImageFormat(String displayImageFormat) {
+        MedFileApplication.displayImageFormat = displayImageFormat;
+    }
+
     @Override
     public void start(Stage stage) throws Exception {
 

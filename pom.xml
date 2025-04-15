@@ -68,6 +68,13 @@
             <artifactId>loci-tools</artifactId>
             <version>5.1.3</version>
         </dependency>
+
+        <dependency>
+            <groupId>ome</groupId>
+            <artifactId>formats-gpl</artifactId>
+            <version>6.13.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-imaging</artifactId>
@@ -159,6 +166,11 @@
     </build>
 
     <repositories>
+        <repository>
+            <id>openmicroscopy</id>
+            <url>https://artifacts.openmicroscopy.org/artifactory/ome.releases/</url>
+        </repository>
+
         <repository>
             <id>github</id>
             <url>https://maven.pkg.github.com/javapackager/JavaPackager</url>

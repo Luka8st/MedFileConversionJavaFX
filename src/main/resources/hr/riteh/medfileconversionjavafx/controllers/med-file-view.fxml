@@ -40,13 +40,13 @@
 
             <!-- Load Directory Selection -->
             <VBox alignment="CENTER" spacing="5.0">
-                <Button fx:id="selectLoadDirectoryBtn" onAction="#onSelectLoadDirectoryClick" text="Select directory to load files from" />
+                <Button fx:id="selectLoadDirectoryBtn" prefWidth="250.0" onAction="#onSelectLoadDirectoryClick" text="Select directory to load files from" />
                 <Label fx:id="loadDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
             </VBox>
 
             <!-- Store Directory Selection -->
             <VBox alignment="CENTER" spacing="5.0">
-                <Button fx:id="selectStoreDirectoryBtn" onAction="#onSelectStoreDirectoryClick" text="Select directory to store results to" />
+                <Button fx:id="selectStoreDirectoryBtn" prefWidth="250.0" onAction="#onSelectStoreDirectoryClick" text="Select an empty directory to store results to" />
                 <Label fx:id="storeDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
             </VBox>
 

@@ -10,7 +10,6 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 //import ncsa.hdf.object.h5.*;
-import org.apache.commons.io.FileDeleteStrategy;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -26,9 +25,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,7 +56,6 @@ public class LaboratoryHSIConverter {
     private static final String WHITE_REFERENCE_FILENAME_TEMPLATE  = "_white_white.img";
 
     private int write_file_id = -1;
-    private int write_group_id = -1;
     int read_file_id = -1;
     private String basePath;
     private String headerPath;
@@ -80,6 +76,10 @@ public class LaboratoryHSIConverter {
 
     public double[] getWavelengths() {
         return wavelengths;
+    }
+
+    public int getWrite_file_id() {
+        return write_file_id;
     }
 
     public void setBasePath(String basePath) {
@@ -109,11 +109,11 @@ public class LaboratoryHSIConverter {
         manifestFiles = new ArrayList<Triplet<String, String, String>>();
         this.basePath = basePath;
         this.hdfDirectoryPath = hdfDirectoryPath;
-
     }
 
     public void run() throws Exception {
         findAllFiles();
+        checkHdfDirectory();
         createHdfFile();
         readHdrFile();
         storeMetadataXml();
@@ -122,6 +122,16 @@ public class LaboratoryHSIConverter {
         readAcquiredAndStoreReflectance();
         storeManifestXml();
         closeHdfFile();
+    }
+
+    private void checkHdfDirectory() throws IOException {
+        if (!isDirEmpty(Path.of(hdfDirectoryPath))) throw new DirectoryNotEmptyException("Directory with the given path is not empty");
+    }
+
+    private static boolean isDirEmpty(final Path directory) throws IOException {
+        try(DirectoryStream<Path> dirStream = Files.newDirectoryStream(directory)) {
+            return !dirStream.iterator().hasNext();
+        }
     }
 
     public void findAllFiles() throws FileNotFoundException {
@@ -173,6 +183,9 @@ public class LaboratoryHSIConverter {
         NUM_POS_HSI = (int) readdims[0];
         NUM_WAVELENGTHS = (int) readdims[1];
         NUM_SAMPLES = (int) readdims[2];
+
+        H5.H5Sclose(read_dataspace_id);
+        H5.H5Dclose(read_dataset_id);
     }
 
     public void readHdrFile() throws FileNotFoundException {
@@ -347,7 +360,9 @@ public class LaboratoryHSIConverter {
         int memspace_id = H5.H5Screate_simple(1, dimsStr, null);
         H5.H5Dwrite(str_dataset_id, HDF5Constants.H5T_NATIVE_CHAR, memspace_id, str_dataspace_id, HDF5Constants.H5P_DEFAULT, str.getBytes(StandardCharsets.UTF_8));
 
-        H5.H5Dclose(str_dataset_id);
+        if (memspace_id >= 0) H5.H5Sclose(memspace_id);
+        if (str_dataspace_id >= 0) H5.H5Sclose(str_dataspace_id);
+        if (str_dataset_id >= 0) H5.H5Dclose(str_dataset_id);
     }
 
     public void stringToDom(String xmlSource, String filename)
@@ -550,11 +565,22 @@ public class LaboratoryHSIConverter {
             H5.H5Dwrite(reflectance_dataset_id, HDF5Constants.H5T_NATIVE_FLOAT, memspace_id, reflectance_dataspace_id, HDF5Constants.H5P_DEFAULT, refls);
         }
 
+        if (memspace_id >= 0) {
+            H5.H5Sclose(memspace_id);
+        }
+
         if (reflectance_dataset_id >= 0)
             H5.H5Dclose(reflectance_dataset_id);
 
         if (reflectance_dataspace_id >= 0)
             H5.H5Sclose(reflectance_dataspace_id);
+
+        if (read_dataset_id >= 0) {
+            H5.H5Dclose(read_dataset_id);
+        }
+        if (read_dataspace_id >= 0) {
+            H5.H5Sclose(read_dataspace_id);
+        }
 
         //if (write_group_id >= 0)
         //    H5.H5Gclose(write_group_id);
@@ -584,6 +610,13 @@ public class LaboratoryHSIConverter {
 
         H5.H5Sselect_hyperslab(read_dataspace_id, HDF5Constants.H5S_SELECT_SET, new long[]{0, 0}, null, new long[]{1, 1}, dims);
         H5.H5Dread(read_dataset_id, HDF5Constants.H5T_NATIVE_DOUBLE, memspace_id, read_dataspace_id, HDF5Constants.H5P_DEFAULT, positions);
+
+        if (memspace_id >= 0) {
+            H5.H5Sclose(memspace_id);
+        }
+
+        H5.H5Sclose(read_dataspace_id);
+        H5.H5Dclose(read_dataset_id);
     }
 
     private double[] readAndAverageWhiteData() throws IOException {
@@ -610,6 +643,8 @@ public class LaboratoryHSIConverter {
         System.out.println("ids: " + write_file_id + ", " + read_file_id);
 
         if (write_file_id >= 0) {
+            checkOpenObjects(write_file_id);
+
             H5.H5Fclose(write_file_id);
             write_file_id = -1;
         }
@@ -624,6 +659,24 @@ public class LaboratoryHSIConverter {
 
         System.gc();
         H5.H5garbage_collect();
+    }
+
+    public void checkOpenObjects(int file_id) throws HDF5LibraryException {
+        // Get the count of open objects
+        int openObjectCount = H5.H5Fget_obj_count(file_id, HDF5Constants.H5F_OBJ_ALL);
+        System.out.println("Number of open objects: " + openObjectCount);
+
+        if (openObjectCount > 0) {
+            // Retrieve the IDs of open objects
+            int[] obj_ids = new int[openObjectCount];
+            H5.H5Fget_obj_ids(file_id, HDF5Constants.H5F_OBJ_ALL, openObjectCount, obj_ids);
+
+            // Print the IDs of open objects
+            System.out.println("Open object IDs:");
+            for (int obj_id : obj_ids) {
+                System.out.println(" - Object ID: " + obj_id);
+            }
+        }
     }
 
     public void killProcess(String filePath) {

@@ -10,6 +10,7 @@ import hr.riteh.medfileconversionjavafx.displayers.MicroscopyHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.displayers.SpecimIQHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.exceptions.DirectoryNotFoundException;
 import hr.riteh.medfileconversionjavafx.readers.LaboratoryHSIReader;
+import hr.riteh.medfileconversionjavafx.readers.MicroscopyHSIReader;
 import hr.riteh.medfileconversionjavafx.readers.SpecimIQHSIReader;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryNotEmptyException;
 
 public class MedFileController {
     private File loadDirectory;
@@ -86,13 +88,25 @@ public class MedFileController {
     @FXML
     public void initialize() {
         // Set the default value for imageFormatBox
-        imageFormatBox.setValue("Laboratory-HSI");
-        displayImageFormatBox.setValue("Laboratory-HSI");
+        imageFormatBox.setValue(MedFileApplication.getImageFormat() == null ? "Laboratory-HSI" : MedFileApplication.getImageFormat());
+        displayImageFormatBox.setValue(MedFileApplication.getDisplayImageFormat() == null ? "Laboratory-HSI" : MedFileApplication.getDisplayImageFormat());
         // verticalSeparator.prefHeightProperty().bind(mainHBox.heightProperty().multiply(0.5));
 
         leftVBox.setPrefWidth(0.3*SceneConstants.SCENE_WIDTH);
         rightVBox.setPrefWidth(0.3*SceneConstants.SCENE_WIDTH);
 
+        loadDirectoryLabel.setText("Selected: " + (MedFileApplication.getLoadDirectory() != null ? MedFileApplication.getLoadDirectory() : "None"));
+        if (MedFileApplication.getLoadDirectory() != null) {
+            loadDirectorySet = true;
+            loadDirectory = new File(MedFileApplication.getLoadDirectory());
+        }
+
+        displayDirectoryLabel.setText("Selected: " + (MedFileApplication.getDisplayDirectory() != null ? MedFileApplication.getDisplayDirectory() : "None"));
+        if (MedFileApplication.getDisplayDirectory() != null) {
+            displayDirectorySet = true;
+            displayBtn.setDisable(false);
+            displayDirectory = new File(MedFileApplication.getDisplayDirectory());
+        }
     }
 
     public void setStage(Stage stage) {
@@ -199,7 +213,10 @@ public class MedFileController {
                 Scene scene = new Scene(fxmlMicroscopyHSILoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
                 stage.setScene(scene);
 
-                MicroscopyHSIDisplayer microscopyHSIDisplayer = new MicroscopyHSIDisplayer();
+                MicroscopyHSIDisplayer microscopyHSIDisplayer = new MicroscopyHSIDisplayer(microscopyHSIConverter.getDarkMetadataMap(), microscopyHSIConverter.getNumDarkImages(),
+                        microscopyHSIConverter.getGreenMetadataMap(), microscopyHSIConverter.getNumGreenImages(),
+                        microscopyHSIConverter.getWhiteMetadataMap(), microscopyHSIConverter.getNumWhiteImages());
+
                 MicroscopyHSIController microscopyHSIController = fxmlMicroscopyHSILoader.getController();
                 microscopyHSIController.setupDisplayer(microscopyHSIDisplayer);
                 microscopyHSIController.setStage(stage);
@@ -208,10 +225,13 @@ public class MedFileController {
                 //System.out.println("metadata");
                 //laboratoryHSIDisplayer.printMetadata();
 
+                MedFileApplication.setLoadDirectory(microscopyHSIConverter.getBasePath());
+                MedFileApplication.setImageFormat("Microscopy-HSI");
+
                 Task<Void> displayTask = new Task<>() {
                     @Override
                     protected Void call() throws Exception {
-                        //labHSIController.generateAndDisplayInitialImage();
+                        microscopyHSIController.generateAndDisplayInitialImage();
                         return null;
                     }
                 };
@@ -227,6 +247,8 @@ public class MedFileController {
             Throwable e = task.getException();
             if (e instanceof FileNotFoundException) {
                 showAlert("File Not Found", "Error: " + e.getMessage());
+            } else if (e instanceof DirectoryNotEmptyException) {
+                showAlert("Directory Not Empty", "Error: " + e.getMessage());
             } else {
                 showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
             }
@@ -253,7 +275,10 @@ public class MedFileController {
 
     private void loadLabHsiScreen(Scene currentScene, Pane stackPane) throws DirectoryNotFoundException {
         FXMLLoader fxmlLabHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/lab-hsi-view.fxml"));
-        LaboratoryHSIConverter laboratoryHSIConverter = new LaboratoryHSIConverter(loadDirectory.getAbsolutePath(), storeDirectory.getAbsolutePath());
+        LaboratoryHSIConverter laboratoryHSIConverter = new LaboratoryHSIConverter(
+                loadDirectory.getAbsolutePath(),
+                storeDirectory.getAbsolutePath()
+        );
 
         Task<Void> task = new Task<>() {
             @Override
@@ -291,6 +316,9 @@ public class MedFileController {
                 System.out.println("metadata");
                 laboratoryHSIDisplayer.printMetadata();
 
+                MedFileApplication.setLoadDirectory(laboratoryHSIConverter.getBasePath());
+                MedFileApplication.setImageFormat("Laboratory-HSI");
+
                 Task<Void> displayTask = new Task<>() {
                     @Override
                     protected Void call() throws Exception {
@@ -310,10 +338,12 @@ public class MedFileController {
             Throwable e = task.getException();
             if (e instanceof FileNotFoundException) {
                 showAlert("File Not Found", "Error: " + e.getMessage());
+            } else if (e instanceof DirectoryNotEmptyException) {
+                showAlert("Directory Not Empty", "Error: " + e.getMessage());
             } else {
                 showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
             }
-            e.printStackTrace();
+            //e.printStackTrace();
 
             ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
 
@@ -376,6 +406,9 @@ public class MedFileController {
             SpecimIQHSIController specimIQHSIController = fxmlSpecimIQHSILoader.getController();
             specimIQHSIController.setupDisplayer(specimIQHSIDisplayer);
 
+            MedFileApplication.setLoadDirectory(specimIQHSIConverter.getBasePath());
+            MedFileApplication.setImageFormat("SpecimIQ-HSI");
+
             Task<Void> displayTask = new Task<>() {
                 @Override
                 protected Void call() {
@@ -433,6 +466,86 @@ public class MedFileController {
 
         if (displayImageFormatBox.getValue().equals("Laboratory-HSI")) loadLabHsiDisplayScreen(currentScene, stackPane);
         else if (displayImageFormatBox.getValue().equals("SpecimIQ-HSI")) loadSpecimIQDisplayScreen(currentScene, stackPane);
+        else if (displayImageFormatBox.getValue().equals("Microscopy-HSI")) loadMicroscopyHsiDisplayScreen(currentScene, stackPane);
+    }
+
+    private void loadMicroscopyHsiDisplayScreen(Scene currentScene, StackPane stackPane) {
+        FXMLLoader fxmlLabHSILoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/microscopy-hsi-view.fxml"));
+        MicroscopyHSIReader microscopyHSIReader = new MicroscopyHSIReader(displayDirectory.getAbsolutePath());
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                selectLoadDirectoryBtn.setDisable(true);
+                selectStoreDirectoryBtn.setDisable(true);
+                loadBtn.setDisable(true);
+                selectDisplayDirectoryBtn.setDisable(true);
+                displayBtn.setDisable(true);
+
+                microscopyHSIReader.run();
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(event -> {
+            try {
+                ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+                Scene scene = new Scene(fxmlLabHSILoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
+                stage.setScene(scene);
+
+                MicroscopyHSIDisplayer microscopyHSIDisplayer = new MicroscopyHSIDisplayer(microscopyHSIReader.getDarkMetadataMap(), microscopyHSIReader.getNumDarkImages(),
+                        microscopyHSIReader.getGreenMetadataMap(), microscopyHSIReader.getNumGreenImages(),
+                        microscopyHSIReader.getWhiteMetadataMap(), microscopyHSIReader.getNumWhiteImages());
+
+                MicroscopyHSIController microscopyHSIController = fxmlLabHSILoader.getController();
+                microscopyHSIController.setupDisplayer(microscopyHSIDisplayer);
+                microscopyHSIController.setStage(stage);
+
+                MedFileApplication.setDisplayDirectory(microscopyHSIReader.getLoadPath());
+                MedFileApplication.setImageFormat("Microscopy-HSI");
+
+                Task<Void> displayTask = new Task<>() {
+                    @Override
+                    protected Void call() throws Exception {
+                        microscopyHSIController.generateAndDisplayInitialImage();
+                        return null;
+                    }
+                };
+                new Thread(displayTask).start();
+            } catch (IOException e) {
+                // e.printStackTrace();
+                showAlert("Error", "Failed to load the new scene: " + e.getMessage());
+                System.out.println("Error: " + e.getMessage());
+            }
+            });
+
+        task.setOnFailed(event -> {
+            Throwable e = task.getException();
+            if (e instanceof FileNotFoundException) {
+                showAlert("File Not Found", "Error: " + e.getMessage());
+            } else {
+                showAlert("Unexpected Error", "An unexpected error occurred. Please try again.");
+            }
+            e.printStackTrace();
+
+            ((Pane) currentScene.getRoot()).getChildren().remove(stackPane);
+
+            loadDirectorySet = false;
+            storeDirectorySet = false;
+            loadDirectoryLabel.setText("Selected: None");
+            storeDirectoryLabel.setText("Selected: None");
+
+            selectLoadDirectoryBtn.setDisable(false);
+            selectStoreDirectoryBtn.setDisable(false);
+            loadBtn.setDisable(true);
+            selectDisplayDirectoryBtn.setDisable(false);
+            displayBtn.setDisable(true);
+        });
+
+        Thread thread = new Thread(task);
+        thread.setDaemon(true); // Optional: Allows the thread to exit when the application exits
+        thread.start();
     }
 
     private void loadLabHsiDisplayScreen(Scene currentScene, StackPane stackPane) {
@@ -469,9 +582,13 @@ public class MedFileController {
                 );
                 LabHSIController labHSIController = fxmlLabHSILoader.getController();
                 labHSIController.setupDisplayer(laboratoryHSIDisplayer);
+                labHSIController.setStage(stage);
 
                 System.out.println("metadata");
                 laboratoryHSIDisplayer.printMetadata();
+
+                MedFileApplication.setDisplayDirectory(laboratoryHSIReader.getLoadPath());
+                MedFileApplication.setImageFormat("Laboratory-HSI");
 
                 Task<Void> displayTask = new Task<>() {
                     @Override
@@ -551,6 +668,9 @@ public class MedFileController {
             );
             SpecimIQHSIController specimIQHSIController = fxmlSpecimIQHSILoader.getController();
             specimIQHSIController.setupDisplayer(specimIQHSIDisplayer);
+
+            MedFileApplication.setDisplayDirectory(specimIQHSIReader.getLoadPath());
+            MedFileApplication.setImageFormat("SpecimIQ-HSI");
 
             Task<Void> displayTask = new Task<>() {
                 @Override

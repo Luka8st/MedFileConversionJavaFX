@@ -336,7 +336,7 @@ public class LabHSIController {
 
     @FXML
     protected void onReturnBtnClick() throws IOException {
-        labHSIConverter.closeHdfFile();
+        //labHSIConverter.closeHdfFile();
         //labHSIConverter.killProcess(labHSIConverter.getHdfDirectoryPath() + "\\laboratory_hsi.h5");
 
         FXMLLoader fxmlMedFileLoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/med-file-view.fxml"));

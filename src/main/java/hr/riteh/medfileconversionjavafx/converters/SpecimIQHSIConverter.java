@@ -70,6 +70,10 @@ public class SpecimIQHSIConverter {
         return imageName;
     }
 
+    public String getBasePath() {
+        return basePath;
+    }
+
     public void run() throws IOException, ParserConfigurationException, TransformerException {
         findImageName();
         findAllFiles();
