@@ -263,7 +263,7 @@ public class LaboratoryHSIConverter {
         storeStringAsAscii("metadata", xmlString);
 
         // just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\metadata_lab.xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\metadata_lab.xml");
 
 //        manifestFiles.add(new Triplet<>(hdfDirectoryPath + "\\metadata.xml", "metadata", "xml"));
         manifestFiles.add(new Triplet<>("metadata", "metadata", "xml"));
@@ -306,7 +306,7 @@ public class LaboratoryHSIConverter {
         storeStringAsAscii("manifest", xmlString);
 
         // just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\manifest_lab.xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\manifest_lab.xml");
     }
 
     public void createHdfFile() throws IOException, HDF5LibraryException, InterruptedException {
@@ -320,6 +320,21 @@ public class LaboratoryHSIConverter {
 
         write_file_id = H5.H5Fcreate(hdfPath, HDF5Constants.H5F_ACC_TRUNC,
                 HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        long[] dims = {"Laboratory-HSI".length()}; // Scalar attribute
+        int dataspace_id = H5.H5Screate_simple(1, dims, null);
+
+        // Create the attribute
+        int attribute_id = H5.H5Acreate(write_file_id, "format",
+                HDF5Constants.H5T_NATIVE_CHAR, dataspace_id,
+                HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        // Write the attribute value
+        H5.H5Awrite(attribute_id, HDF5Constants.H5T_NATIVE_CHAR, "Laboratory-HSI".getBytes(StandardCharsets.UTF_8));
+
+        // Close the attribute and dataspace
+        H5.H5Aclose(attribute_id);
+        H5.H5Sclose(dataspace_id);
 
         /*if (Files.exists(Path.of(hdfPath))) {
             closeHdfFile(); // Close the file if it is open

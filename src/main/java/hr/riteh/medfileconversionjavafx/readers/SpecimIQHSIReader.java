@@ -29,8 +29,8 @@ public class SpecimIQHSIReader {
     private Map<String, Object> hdrMetadata;
     private Map<String, Object> resultsHdrMetadata;
 
-    public SpecimIQHSIReader(String loadPath) {
-        this.loadPath = loadPath;
+    public SpecimIQHSIReader(String hdfPath) {
+        this.hdfPath = hdfPath;
         manifestMap = new HashMap<>();
         hdrMetadata = new HashMap<>();
         resultsHdrMetadata = new HashMap<>();
@@ -40,8 +40,12 @@ public class SpecimIQHSIReader {
         return loadPath;
     }
 
+    public String getHdfPath() {
+        return hdfPath;
+    }
+
     public void run() throws ParserConfigurationException, IOException, SAXException {
-        findHdfFile();
+        //findHdfFile();
         openHdfFile();
         readManifest();
 

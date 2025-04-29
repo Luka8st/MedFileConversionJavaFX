@@ -32,6 +32,7 @@ public class LaboratoryHSIDisplayer {
     private int[] displayData;
     private int[][] displayData2d;
     private String hdfDirectoryPath;
+    private String hdfFilePath;
 
     Map<Dimension, Integer> dimensionMap = Map.of(
             Dimension.WAVELENGTHS, 2048,
@@ -39,7 +40,7 @@ public class LaboratoryHSIDisplayer {
             Dimension.POSITIONS, 400
     );
 
-    public LaboratoryHSIDisplayer(Map<String, String> metadataMap, double[] positions, double[] wavelengths, String hdfDirectoryPath, Scene scene) {
+    public LaboratoryHSIDisplayer(Map<String, String> metadataMap, double[] positions, double[] wavelengths, boolean isDirectoryProvided,String hdfPath, Scene scene) {
         selectedDimension = Dimension.WAVELENGTHS;
         firstDimension = Dimension.POSITIONS;
         secondDimension = Dimension.SAMPLES;
@@ -55,7 +56,23 @@ public class LaboratoryHSIDisplayer {
         this.metadataMap = metadataMap;
         this.positions = positions;
         this.wavelengths = wavelengths;
-        this.hdfDirectoryPath = hdfDirectoryPath;
+        if (isDirectoryProvided) {
+            this.hdfDirectoryPath = hdfPath;
+            findHdfFile();
+        }
+        else this.hdfFilePath = hdfPath;
+        System.out.println("HDF5 file path: " + hdfFilePath);
+    }
+
+    private void findHdfFile() {
+        System.out.println("Finding HDF5 file in directory: " + hdfDirectoryPath);
+        File directory = new File(hdfDirectoryPath);
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".h5"));
+        if (files != null && files.length > 0) {
+            hdfFilePath = files[0].getAbsolutePath();
+        } else {
+            System.out.println("No HDF5 file found in the directory.");
+        }
     }
 
     public void setData(float[] data) {
@@ -230,8 +247,11 @@ public class LaboratoryHSIDisplayer {
 //            System.out.println("path: " + hdfDirectoryPath + "\\laboratory_hsi.h5");
 //            System.out.println(new File(hdfDirectoryPath + "\\laboratory_hsi.h5").exists());
 
-            hdf_file_id = H5.H5Fopen(hdfDirectoryPath + "\\laboratory_hsi.h5", HDF5Constants.H5F_ACC_RDONLY,
-                    HDF5Constants.H5P_DEFAULT);
+            //hdf_file_id = H5.H5Fopen(hdfDirectoryPath + "\\laboratory_hsi.h5", HDF5Constants.H5F_ACC_RDONLY,
+            //        HDF5Constants.H5P_DEFAULT);
+
+            hdf_file_id = H5.H5Fopen(hdfFilePath, HDF5Constants.H5F_ACC_RDONLY,
+                HDF5Constants.H5P_DEFAULT);
 
             dataset_id = H5.H5Dopen(hdf_file_id, "reflectance");
             dataspace_id = H5.H5Dget_space(dataset_id);

@@ -27,17 +27,6 @@
 
             <Label text="Process data and display" />
 
-            <!-- ChoiceBox for Image Format -->
-            <ChoiceBox fx:id="imageFormatBox" onAction="#onFormatChoiceMade">
-                <items>
-                    <FXCollections fx:factory="observableArrayList">
-                        <String fx:value="Laboratory-HSI" />
-                        <String fx:value="SpecimIQ-HSI" />
-                        <String fx:value="Microscopy-HSI" />
-                    </FXCollections>
-                </items>
-            </ChoiceBox>
-
             <!-- Load Directory Selection -->
             <VBox alignment="CENTER" spacing="5.0">
                 <Button fx:id="selectLoadDirectoryBtn" prefWidth="250.0" onAction="#onSelectLoadDirectoryClick" text="Select directory to load files from" />
@@ -72,21 +61,10 @@
 
             <Label text="Display data" />
 
-            <!-- ChoiceBox for Image Format -->
-            <ChoiceBox fx:id="displayImageFormatBox" onAction="#onDisplayFormatChoiceMade">
-                <items>
-                    <FXCollections fx:factory="observableArrayList">
-                        <String fx:value="Laboratory-HSI" />
-                        <String fx:value="SpecimIQ-HSI" />
-                        <String fx:value="Microscopy-HSI" />
-                    </FXCollections>
-                </items>
-            </ChoiceBox>
-
             <!-- Store Directory Selection -->
             <VBox alignment="CENTER" spacing="5.0">
-                <Button fx:id="selectDisplayDirectoryBtn" onAction="#onSelectDisplayDirectoryClick" text="Select directory to display results from" />
-                <Label fx:id="displayDirectoryLabel" style="-fx-text-fill: grey;" text="Selected: None" />
+                <Button fx:id="selectDisplayFileBtn" onAction="#onSelectDisplayFileClick" text="Select file to display results from" />
+                <Label fx:id="displayFileLabel" style="-fx-text-fill: grey;" text="Selected: None" />
             </VBox>
 
             <Region VBox.vgrow="ALWAYS" />

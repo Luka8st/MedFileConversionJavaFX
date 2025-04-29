@@ -90,6 +90,10 @@
                         <Label fx:id="endSliceLabel"/>
                     </HBox>
                 </VBox>
+
+                <VBox alignment="TOP_RIGHT">
+                    <Button fx:id="returnBtn1" onMouseClicked="#onReturnBtnClick" text="Return to homepage" alignment="TOP_RIGHT"/>
+                </VBox>
             </HBox>
 
         </Tab>
@@ -107,6 +111,10 @@
                 <VBox alignment="TOP_CENTER" HBox.hgrow="ALWAYS" spacing="20.0">
                     <ChoiceBox fx:id="pngChoiceBox"/>
                     <ImageView fx:id="pngImageView" fitHeight="600.0" fitWidth="600.0" pickOnBounds="true" preserveRatio="true"/>
+                </VBox>
+
+                <VBox alignment="TOP_RIGHT">
+                    <Button fx:id="returnBtn2" onMouseClicked="#onReturnBtnClick" text="Return to homepage" alignment="TOP_RIGHT"/>
                 </VBox>
             </HBox>
         </Tab>

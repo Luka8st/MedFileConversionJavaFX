@@ -4,6 +4,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Map;
 
 public class MicroscopyHSIDisplayer {
@@ -15,17 +16,37 @@ public class MicroscopyHSIDisplayer {
     private int numWhiteImages;
     private Map<String, String> whiteMetadataMap;
     private String selectedDataset;
+    private String hdfDirectoryPath;
+    private String hdfFilePath;
 
     public MicroscopyHSIDisplayer(Map<String, String> darkMetadataMap, int numDarkImages,
                                   Map<String, String> greenMetadataMap, int numGreenImages,
-                                  Map<String, String> whiteMetadataMap, int numWhiteImages) {
+                                  Map<String, String> whiteMetadataMap, int numWhiteImages,
+                                  boolean isDirectoryProvided, String hdfPath) {
         this.darkMetadataMap = darkMetadataMap;
         this.numDarkImages = numDarkImages;
         this.greenMetadataMap = greenMetadataMap;
         this.numGreenImages = numGreenImages;
         this.whiteMetadataMap = whiteMetadataMap;
         this.numWhiteImages = numWhiteImages;
+        if (isDirectoryProvided) {
+            this.hdfDirectoryPath = hdfPath;
+            findHdfFile();
+        }
+        else this.hdfFilePath = hdfPath;
+        System.out.println("HDF Directory Path: " + hdfDirectoryPath);
         selectedDataset = "dark";
+    }
+
+    private void findHdfFile() {
+        System.out.println("Finding HDF5 file in directory: " + hdfDirectoryPath);
+        File directory = new File(hdfDirectoryPath);
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".h5"));
+        if (files != null && files.length > 0) {
+            hdfFilePath = files[0].getAbsolutePath();
+        } else {
+            System.out.println("No HDF5 file found in the directory.");
+        }
     }
 
     public void setSelectedSlice(int selectedSlice) {
@@ -91,7 +112,8 @@ public class MicroscopyHSIDisplayer {
         int dataspace_id = -1;
         int memspace_id = -1;
 
-        hdf_file_id = H5.H5Fopen("D:\\Faks\\4. godina\\Izborni projekt\\michsi\\microscopy_hsi.h5", HDF5Constants.H5F_ACC_RDONLY,
+        //System.out.println("Reading Laboratory HSI file: " + hdfDirectoryPath + "\\microscopy_hsi.h5");
+        hdf_file_id = H5.H5Fopen(hdfFilePath, HDF5Constants.H5F_ACC_RDONLY,
                 HDF5Constants.H5P_DEFAULT);
 
         dataset_id = H5.H5Dopen(hdf_file_id, selectedDataset);

@@ -21,14 +21,15 @@ import java.util.Map;
 public class MicroscopyHSIReader {
     private String loadPath;
     private String hdfPath;
+    private String hdfDirectoryPath;
     private Map<String, String> manifestMap;
     private Map<String, String> darkMetadataMap;
     private Map<String, String> greenMetadataMap;
     private Map<String, String> whiteMetadataMap;
     int readFileId = -1;
 
-    public MicroscopyHSIReader(String loadPath) {
-        this.loadPath = loadPath;
+    public MicroscopyHSIReader(String hdfPath) {
+        this.hdfPath = hdfPath;
         manifestMap = new HashMap<>();
         darkMetadataMap = new HashMap<>();
         greenMetadataMap = new HashMap<>();
@@ -63,8 +64,16 @@ public class MicroscopyHSIReader {
         return loadPath;
     }
 
+    public String getHdfPath() {
+        return hdfPath;
+    }
+
+    public String getHdfDirectoryPath() {
+        return hdfDirectoryPath;
+    }
+
     public void run() throws ParserConfigurationException, IOException, SAXException {
-        findHdfFile();
+        //findHdfFile();
         System.out.println("Reading Laboratory HSI file: " + hdfPath);
         openHdfFile();
         readManifest();
@@ -85,6 +94,7 @@ public class MicroscopyHSIReader {
         for (File file : files) {
             if (file.getName().endsWith(".h5")) {
                 hdfPath = file.getAbsolutePath();
+                hdfDirectoryPath = file.getParent();
                 System.out.println("Found HDF file: " + hdfPath);
                 return;
             }

@@ -32,8 +32,8 @@ public class LaboratoryHSIReader {
     int readFileId = -1;
 
 
-    public LaboratoryHSIReader(String loadPath) {
-        this.loadPath = loadPath;
+    public LaboratoryHSIReader(String hdfPath) {
+        this.hdfPath = hdfPath;
         dataMap = new HashMap<>();
         manifestMap = new HashMap<>();
     }
@@ -59,7 +59,7 @@ public class LaboratoryHSIReader {
     }
 
     public void run() throws ParserConfigurationException, IOException, SAXException {
-        findHdfFile();
+        //findHdfFile();
         System.out.println("Reading Laboratory HSI file: " + hdfPath);
         openHdfFile();
         readManifest();

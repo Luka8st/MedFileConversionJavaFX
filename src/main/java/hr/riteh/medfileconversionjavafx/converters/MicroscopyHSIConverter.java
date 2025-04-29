@@ -45,6 +45,10 @@ public class MicroscopyHSIConverter {
         return basePath;
     }
 
+    public String getHdfDirectoryPath() {
+        return hdfDirectoryPath;
+    }
+
     public Class getPixelType() {
         return pixelType;
     }
@@ -79,6 +83,7 @@ public class MicroscopyHSIConverter {
 
         this.basePath = basePath;
         this.hdfDirectoryPath = hdfDirectoryPath;
+        System.out.println("HDF Directory Path in converter: " + hdfDirectoryPath);
         darkMetadataMap = new HashMap<>();
         greenMetadataMap = new HashMap<>();
         whiteMetadataMap = new HashMap<>();
@@ -306,7 +311,7 @@ public class MicroscopyHSIConverter {
         storeStringAsAscii(datasetName, xmlString);
 
         // just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\" + datasetName + ".xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\" + datasetName + ".xml");
 
 //        manifestFiles.add(new Triplet<>(hdfDirectoryPath + "\\metadata.xml", "metadata", "xml"));
         manifestFiles.add(new Triplet<>(datasetName, datasetName, "xml"));
@@ -349,7 +354,7 @@ public class MicroscopyHSIConverter {
         storeStringAsAscii("manifest", xmlString);
 
         // just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\manifest.xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\manifest.xml");
     }
 
     private void storeMetadata(Map<String, String> metadataMap, IMetadata metadata, IFormatReader reader) {
@@ -490,6 +495,21 @@ public class MicroscopyHSIConverter {
 
         write_file_id = H5.H5Fcreate(hdfPath, HDF5Constants.H5F_ACC_TRUNC,
                 HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        long[] dims = {"Microscopy-HSI".length()}; // Scalar attribute
+        int dataspace_id = H5.H5Screate_simple(1, dims, null);
+
+        // Create the attribute
+        int attribute_id = H5.H5Acreate(write_file_id, "format",
+                HDF5Constants.H5T_NATIVE_CHAR, dataspace_id,
+                HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        // Write the attribute value
+        H5.H5Awrite(attribute_id, HDF5Constants.H5T_NATIVE_CHAR, "Microscopy-HSI".getBytes(StandardCharsets.UTF_8));
+
+        // Close the attribute and dataspace
+        H5.H5Aclose(attribute_id);
+        H5.H5Sclose(dataspace_id);
 
     }
 

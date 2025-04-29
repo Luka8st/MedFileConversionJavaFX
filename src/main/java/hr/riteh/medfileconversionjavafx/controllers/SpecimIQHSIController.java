@@ -1,5 +1,7 @@
 package hr.riteh.medfileconversionjavafx.controllers;
 
+import hr.riteh.medfileconversionjavafx.MedFileApplication;
+import hr.riteh.medfileconversionjavafx.constants.SceneConstants;
 import hr.riteh.medfileconversionjavafx.displayers.SpecimIQHSIDisplayer;
 import hr.riteh.medfileconversionjavafx.helper.Dimension;
 import hr.riteh.medfileconversionjavafx.helper.SpecimImageType;
@@ -9,10 +11,13 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.embed.swing.SwingFXUtils;
 
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.apache.commons.imaging.ImageFormats;
 import org.apache.commons.imaging.ImageWriteException;
@@ -77,6 +82,7 @@ public class SpecimIQHSIController {
     private SpecimIQHSIDisplayer specimIQHSIDisplayer;
     private Timeline slideshowTimeline;
     private static final Set<String> EXCLUDED_KEYS_FOR_DISPLAY = Set.of("wavelength", "wavelengths");
+    private Stage stage;
 
     private String[] wavelengths;
 
@@ -96,7 +102,30 @@ public class SpecimIQHSIController {
         specimIQHSIDisplayer.setCurrentDataset(imageType.getDatasetName());
         specimIQHSIDisplayer.setDimensions(imageType.getDimensions());
         specimIQHSIDisplayer.setSelectedSlice(0);
+
+        updateStage(imageType.getDimensions()[0]);
+
         generateAndDisplayInitialImage();
+    }
+
+    private void updateStage(int numImages) {
+        startSliceLabel.setText("0");
+        endSliceLabel.setText(Integer.valueOf(numImages - 1).toString());
+        //slider.setMax(numImages);
+        //System.out.println("Max value of slider: " + slider.getMax());
+        slider.setValue(0);
+        selectedSliceField.setText("");
+        selectedSliceField.setPromptText("Enter selected slice");
+
+        if (numImages > 1) {
+            slider.setDisable(false);
+            selectBtn.setDisable(false);
+            selectedSliceField.setDisable(false);
+        } else {
+            slider.setDisable(true);
+            selectBtn.setDisable(true);
+            selectedSliceField.setDisable(true);
+        }
     }
 
     private void switchPng() {
@@ -105,6 +134,10 @@ public class SpecimIQHSIController {
 
     public void setSpecimIQHSIDisplayer(SpecimIQHSIDisplayer specimIQHSIDisplayer) {
         this.specimIQHSIDisplayer = specimIQHSIDisplayer;
+    }
+
+    public void setStage(Stage stage) {
+        this.stage = stage;
     }
 
     private void generateAndDisplayNewImage() {
@@ -124,7 +157,7 @@ public class SpecimIQHSIController {
 
     @FXML
     protected void onSliderChange() {
-        specimIQHSIDisplayer.setSelectedSlice((int) slider.getValue() * specimIQHSIDisplayer.getLines()/100 - 1);
+        specimIQHSIDisplayer.setSelectedSlice((int) slider.getValue() * (specimIQHSIDisplayer.getLines()-1)/100);
         generateAndDisplayNewImage();
     }
 
@@ -165,6 +198,17 @@ public class SpecimIQHSIController {
         selectedSliceField.setPromptText("Enter selected slice");
         generateAndDisplayNewImage();
         slider.setValue((double) (slice + 1) * 100 / specimIQHSIDisplayer.getLines());
+    }
+
+    @FXML
+    protected void onReturnBtnClick() throws IOException {
+        FXMLLoader fxmlMedFileLoader = new FXMLLoader(MedFileApplication.class.getResource("controllers/med-file-view.fxml"));
+
+        Scene scene = new Scene(fxmlMedFileLoader.load(), SceneConstants.SCENE_WIDTH, SceneConstants.SCENE_HEIGHT);
+        stage.setScene(scene);
+
+        MedFileController medFileController = fxmlMedFileLoader.getController();
+        medFileController.setStage(stage);
     }
 
 

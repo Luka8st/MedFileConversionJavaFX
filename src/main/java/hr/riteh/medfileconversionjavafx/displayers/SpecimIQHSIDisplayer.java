@@ -4,6 +4,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -11,6 +12,7 @@ public class SpecimIQHSIDisplayer {
 
     private String currentDataset;
     private String hdfDirectoryPath;
+    private String hdfFilePath;
     private String imageName;
     private long[] memoryDims = new long[3];
     private int selectedSlice = 0;
@@ -20,13 +22,29 @@ public class SpecimIQHSIDisplayer {
     private Map<String, Object> resultMetadataMap;
     private Map<String, Object> captureMetadataMap;
 
-    public SpecimIQHSIDisplayer(String hdfDirectoryPath, Map<String, Object> captureMetadataMap, Map<String, Object> resultMetadataMap) {
-        this.hdfDirectoryPath = hdfDirectoryPath;
+    public SpecimIQHSIDisplayer(boolean isDirectoryProvided, String hdfPath, Map<String, Object> captureMetadataMap, Map<String, Object> resultMetadataMap) {
+        if (isDirectoryProvided) {
+            this.hdfDirectoryPath = hdfPath;
+            findHdfFile();
+        } else {
+            this.hdfFilePath = hdfPath;
+        }
 //        this.imageName = imageName;
 //        this.currentDataset = "rawData_" + imageName; // Default dataset
         this.currentDataset = "rawData"; // Default dataset
         this.captureMetadataMap = captureMetadataMap;
         this.resultMetadataMap = resultMetadataMap;
+    }
+
+    private void findHdfFile() {
+        System.out.println("Finding HDF5 file in directory: " + hdfDirectoryPath);
+        File directory = new File(hdfDirectoryPath);
+        File[] files = directory.listFiles((dir, name) -> name.endsWith(".h5"));
+        if (files != null && files.length > 0) {
+            hdfFilePath = files[0].getAbsolutePath();
+        } else {
+            System.out.println("No HDF5 file found in the directory.");
+        }
     }
 
     public Map<String, Object> getResultMetadataMap() {
@@ -218,7 +236,7 @@ public class SpecimIQHSIDisplayer {
 
         try {
             // Open HDF5 file and dataset
-            hdf_file_id = H5.H5Fopen(hdfDirectoryPath + "\\specimiq_hsi.h5", HDF5Constants.H5F_ACC_RDONLY,
+            hdf_file_id = H5.H5Fopen(hdfFilePath, HDF5Constants.H5F_ACC_RDONLY,
                     HDF5Constants.H5P_DEFAULT);
             if (hdf_file_id < 0) {
                 throw new RuntimeException("Failed to open HDF5 file.");
@@ -288,7 +306,7 @@ public class SpecimIQHSIDisplayer {
 
         try {
             // Open HDF5 file and dataset
-            hdf_file_id = H5.H5Fopen(hdfDirectoryPath + "\\specimiq_hsi.h5", HDF5Constants.H5F_ACC_RDONLY,
+            hdf_file_id = H5.H5Fopen(hdfFilePath, HDF5Constants.H5F_ACC_RDONLY,
                     HDF5Constants.H5P_DEFAULT);
             if (hdf_file_id < 0) {
                 throw new RuntimeException("Failed to open HDF5 file.");

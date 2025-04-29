@@ -176,6 +176,22 @@ public class SpecimIQHSIConverter {
         Files.deleteIfExists(Paths.get(hdfPath));
         write_file_id = H5.H5Fcreate(hdfPath, HDF5Constants.H5F_ACC_TRUNC,
                 HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        long[] dims = {"SpecimIQ-HSI".length()}; // Scalar attribute
+        int dataspace_id = H5.H5Screate_simple(1, dims, null);
+
+        // Create the attribute
+        int attribute_id = H5.H5Acreate(write_file_id, "format",
+                HDF5Constants.H5T_NATIVE_CHAR, dataspace_id,
+                HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+        // Write the attribute value
+        H5.H5Awrite(attribute_id, HDF5Constants.H5T_NATIVE_CHAR, "SpecimIQ-HSI".getBytes(StandardCharsets.UTF_8));
+
+        // Close the attribute and dataspace
+        H5.H5Aclose(attribute_id);
+        H5.H5Sclose(dataspace_id);
+
     }
 
     private void storeMetadataXml() {
@@ -190,7 +206,7 @@ public class SpecimIQHSIConverter {
             if (metadataFilePath.isPresent()) {
                 String metadataXml = Files.readString(metadataFilePath.get());
                 storeStringAsAscii("metadata", metadataXml);
-                stringToDom(metadataXml, hdfDirectoryPath + "\\metadata_specim.xml");
+                //stringToDom(metadataXml, hdfDirectoryPath + "\\metadata_specim.xml");
 
                 manifestFiles.add(new Triplet<>("metadata", "metadata", "xml"));
             } else {
@@ -247,7 +263,7 @@ public class SpecimIQHSIConverter {
         storeStringAsAscii(filename, xmlString);
 
         // Just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\" + filename + ".xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\" + filename + ".xml");
 
         //manifestFiles.add(new Triplet<>(filename, "metadata", "xml"));
         manifestFiles.add(new Triplet<>(filename, filename, "xml"));
@@ -674,7 +690,7 @@ public class SpecimIQHSIConverter {
         storeStringAsAscii("manifest", xmlString);
 
         // just to check
-        stringToDom(xmlString, hdfDirectoryPath + "\\manifest_specim.xml");
+        //stringToDom(xmlString, hdfDirectoryPath + "\\manifest_specim.xml");
     }
 
     private void storeStringAsAscii (String datasetName, String str) throws HDF5Exception {

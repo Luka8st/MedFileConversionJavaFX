@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class MedFileApplication extends Application {
     private static String loadDirectory;
-    private static String displayDirectory;
+    private static String displayFile;
     private static String imageFormat;
     private static String displayImageFormat;
 
@@ -24,8 +24,8 @@ public class MedFileApplication extends Application {
         return loadDirectory;
     }
 
-    public static String getDisplayDirectory() {
-        return displayDirectory;
+    public static String getDisplayFile() {
+        return displayFile;
     }
 
     public static String getImageFormat() {
@@ -40,8 +40,8 @@ public class MedFileApplication extends Application {
         loadDirectory = loadDir;
     }
 
-    public static void setDisplayDirectory(String displayDir) {
-        displayDirectory = displayDir;
+    public static void setDisplayFile(String displayFile) {
+        displayFile = displayFile;
     }
 
     public static void setImageFormat(String imageFormat) {
